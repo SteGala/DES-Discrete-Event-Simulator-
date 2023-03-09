@@ -7,3 +7,9 @@ class infra_edge:
         
     def get_id(self):
         return self.__id
+    
+    def get_from(self):
+        return self.__from_node_id
+    
+    def get_to(self):
+        return self.__to_node_id

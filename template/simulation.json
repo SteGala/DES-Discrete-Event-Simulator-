@@ -1,0 +1,5 @@
+{
+    "name": "simulation1",
+    "infra_config": "../template/infra.json", 
+    "out_dir": ""
+}

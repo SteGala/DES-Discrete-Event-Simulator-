@@ -1,6 +1,7 @@
-from node import infra_node
-from edge import infra_edge
-from utils import *
+from infra.node import infra_node
+from infra.edge import infra_edge
+from utils.utils import *
+from exception.exception import InvalidConversionException
 
 class infrastructure:
 
@@ -13,6 +14,7 @@ class infrastructure:
         return self.__name
 
     def load_infrastructure(self, infra_json):
+        #print(infra_json)
         self.__name = infra_json["name"]
         
         if "nodes" not in infra_json:
@@ -30,7 +32,11 @@ class infrastructure:
                                 float(n["alpha"]))
                 
                 self.__nodes[tmp.get_id()] = tmp
-            except:
+            except InvalidConversionException:
+                print("Error converting node {} core_frequency.".format(n["id"]))
+                print("Exiting...")
+                exit()
+            except Exception as e:
                 print("Infrastructure nodes are not properly formatted.")
                 print("Exiting...")
                 exit()
@@ -50,8 +56,23 @@ class infrastructure:
                 
                 self.__edges[tmp.get_id()] = tmp
                 count = count + 1
+            except InvalidConversionException:
+                print("Error converting edge {} core_frequency.".format(count))
+                print("Exiting...")
+                exit()
             except:
                 print("Infrastructure edges are not properly formatted.")
                 print("Exiting...")
                 exit()
+                
+    def print(self):
+        print()
+        print("--INFRASTRUCTURE NODES--")
+        for key in self.__nodes:
+            print("Node: {}".format(self.__nodes[key].get_id()))
+            
+        print("--INFRASTRUCTURE EDGES--")
+        for key in self.__edges:
+            print("Edge: {} \t({}) -> ({})".format(key, self.__edges[key].get_from(), self.__edges[key].get_to()))
+        print()
                 

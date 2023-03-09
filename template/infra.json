@@ -24,7 +24,7 @@
     "edges":
     [
         {
-            "form": "aaa",
+            "from": "aaa",
             "to": "bbb",
             "resource": "1G"
         }

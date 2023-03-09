@@ -1,0 +1,32 @@
+{
+    "name": "Template infrasrtructure",
+
+    "nodes":
+    [
+        {
+            "id": "aaa",
+            "n_core": 12,
+            "core_frequency": "1.5G",
+            "p_static": 1,
+            "k": 1,
+            "alpha": 1
+        },
+        {
+            "id": "bbb",
+            "n_core": 15,
+            "core_frequency": "1.6G",
+            "p_static": 2,
+            "k": 2,
+            "alpha": 2
+        }
+    ],
+
+    "edges":
+    [
+        {
+            "form": "aaa",
+            "to": "bbb",
+            "resource": "1G"
+        }
+    ]
+}

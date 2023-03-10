@@ -1,4 +1,5 @@
 class infra_node:
+    
     def __init__(self, id, n_core, core_frequency, p_static, k, alpha):
         self.__id = id
         self.__n_cores = n_core

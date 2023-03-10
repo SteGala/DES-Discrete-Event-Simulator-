@@ -1,4 +1,4 @@
-class app_edge:
+class event:
     
     def __init__(self):
         pass

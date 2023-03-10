@@ -14,7 +14,6 @@ class infrastructure:
         return self.__name
 
     def load_infrastructure(self, infra_json):
-        #print(infra_json)
         self.__name = infra_json["name"]
         
         if "nodes" not in infra_json:

@@ -1,4 +1,5 @@
 from exception.exception import InvalidConversionException
+import os
 
 def human_format_to_float(str):
     if "G" in str:
@@ -15,4 +16,7 @@ def human_format_to_float(str):
         return float(str.split("K")[0]) * 1000
     else:
         raise InvalidConversionException("Invalid format")
+    
+def generate_os_path(original):
+       return os.path.join("..", original)
     

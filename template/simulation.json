@@ -1,5 +1,6 @@
 {
     "name": "simulation1",
     "infra_config": "template/infra.json", 
+    "app_config": "template/app.json",
     "out_dir": "results"
 }

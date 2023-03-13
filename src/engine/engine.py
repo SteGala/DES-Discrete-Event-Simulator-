@@ -32,41 +32,34 @@ class engine:
             exit()
         self.__out_dir = simulation_conf["out_dir"]
         
-        self.__infra = infrastructure()   
-        if "infra_config" in simulation_conf:
-            print("Loading infrastructure from config file {}".format(simulation_conf["infra_config"]))
-            i_conf = open(generate_os_path(simulation_conf["infra_config"]))
-            infrastructure_conf = json.load(i_conf)
-            self.__infra.load_infrastructure(infrastructure_conf)
-            i_conf.close()
+        if "infra_config" not in simulation_conf:
+            print("Missing infrastructure template in config file. Field 'infra_config' missing")
+            print("Exiting...")
+            exit()
+        print("Loading infrastructure from config file {}".format(simulation_conf["infra_config"]))
+        self.__infra = infrastructure() 
+        i_conf = open(generate_os_path(simulation_conf["infra_config"]))
+        infrastructure_conf = json.load(i_conf)
+        self.__infra.load_infrastructure(infrastructure_conf)
+        i_conf.close()
+            
+        if "app_config" not in simulation_conf:
+            print("Missing application template in config file. Field 'app_config' missing")
+            print("Exiting...")
+            exit()
+        self.__event_queue = event_queue()
+        self.__applications = []
+        print("Generate placement events for the simulation")
+        a_conf = open(generate_os_path(simulation_conf["app_config"]))
+        application_conf = json.load(a_conf)     
+        self.__generate_placement_events(application_conf)
+        a_conf.close()
         
         s_conf.close()
-        
-        self.__simulation_running = False
-        self.__event_queue = event_queue()
-
-        self.__simulation_running_lock = threading.Lock()
-        self.__simulation_thread = threading.Thread(target=self.__main_engine_loop)
-        
-    def is_running(self):
-        with self.__simulation_running_lock:
-            return self.__simulation_running
 
     def start_simulation(self):
-        with self.__simulation_running_lock:
-            self.__simulation_running = True
-        
-        print("Starting simulation main thread")
-        self.__simulation_thread.start()      
-    
-    def stop_simulation(self):
-        with self.__simulation_running_lock:
-            self.__simulation_running = False
-            
-        print("waiting for simulation main thread to join")
-        self.__simulation_thread.join()
-        self.__event_queue.stop()
-        return
+        print("Starting simulation main loop")
+        self.__main_engine_loop()      
                   
     #main simulation loop, in charge of creating events to the event queue
     def __main_engine_loop(self):
@@ -79,6 +72,9 @@ class engine:
             print("ADD", flush=True)
             self.__event_queue.enqueue(myprint)
             time.sleep(random.randint(0, 10))      
+    
+    def __generate_placement_events(self, app_conf):
+        pass
         
     def dump_to_file(self):
         print("Generating report to directory {}".format(self.__out_dir))

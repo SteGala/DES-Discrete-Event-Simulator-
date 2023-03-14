@@ -31,6 +31,7 @@ class infrastructure:
                                 float(n["alpha"]))
                 
                 self.__nodes[tmp.get_id()] = tmp
+                self.__edges[tmp.get_id()] = []
             except InvalidConversionException:
                 print("Error converting node {} core_frequency.".format(n["id"]))
                 print("Exiting...")
@@ -48,13 +49,18 @@ class infrastructure:
         count = 0
         for e in infra_json["edges"]:
             try:
-                tmp = infra_edge(str(count),
+                tmp1 = infra_edge(str(count),
                                  e["from"],
                                  e["to"],
                                  human_format_to_float(e["resource"]))
+                tmp2 = infra_edge(str(count+1),
+                                 e["to"],
+                                 e["from"],
+                                 human_format_to_float(e["resource"]))
                 
-                self.__edges[tmp.get_id()] = tmp
-                count = count + 1
+                self.__edges[e["from"]].append(tmp1)
+                self.__edges[e["to"]].append(tmp2)
+                count = count + 2
             except InvalidConversionException:
                 print("Error converting edge {} core_frequency.".format(count))
                 print("Exiting...")
@@ -70,8 +76,12 @@ class infrastructure:
         for key in self.__nodes:
             print("Node: {}".format(self.__nodes[key].get_id()))
             
+        print()
         print("--INFRASTRUCTURE EDGES--")
         for key in self.__edges:
-            print("Edge: {} \t({}) -> ({})".format(key, self.__edges[key].get_from(), self.__edges[key].get_to()))
+            print("Node: {}".format(key), end="")
+            for e in self.__edges[key]:
+                print("\t(X) -> ({})".format(e.get_to()), end="")
+            print()
         print()
                 

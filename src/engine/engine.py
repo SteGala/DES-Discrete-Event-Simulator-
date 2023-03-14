@@ -1,5 +1,6 @@
 import random
 from infra.infrastructure import infrastructure
+from app.application import application
 from event.event_queue import event_queue 
 from utils.utils import *
 import json
@@ -47,8 +48,6 @@ class engine:
             print("Missing application template in config file. Field 'app_config' missing")
             print("Exiting...")
             exit()
-        self.__event_queue = event_queue()
-        self.__applications = []
         print("Generate placement events for the simulation")
         a_conf = open(generate_os_path(simulation_conf["app_config"]))
         application_conf = json.load(a_conf)     
@@ -56,6 +55,8 @@ class engine:
         a_conf.close()
         
         s_conf.close()
+        
+        self.__infra.print()
 
     def start_simulation(self):
         print("Starting simulation main loop")
@@ -63,18 +64,21 @@ class engine:
                   
     #main simulation loop, in charge of creating events to the event queue
     def __main_engine_loop(self):
-        while True:
-            # return if the simulation has been stopped
-            with self.__simulation_running_lock:
-                if not self.__simulation_running:
-                    return
-            
-            print("ADD", flush=True)
-            self.__event_queue.enqueue(myprint)
-            time.sleep(random.randint(0, 10))      
+        pass
     
     def __generate_placement_events(self, app_conf):
-        pass
+        self.__event_queue = event_queue()
+        self.__applications = []
+        
+        if not check_correct_application_config(app_conf):
+            print("The application config file is not correct.")
+            print("Exiting...")
+            exit()
+            
+        for i in range(int(app_conf["number_of_applications"])):
+            a = application(generate_app_name(i), app_conf["app_spec"])
+            self.__applications.append(a)
+            a.print()    
         
     def dump_to_file(self):
         print("Generating report to directory {}".format(self.__out_dir))
@@ -83,5 +87,3 @@ class engine:
             print("Directory {} doesn't exist. Creating directory {}".format(self.__out_dir, self.__out_dir))
             os.mkdir(generate_os_path(self.__out_dir))
             
-def myprint():
-     print("Hello world")

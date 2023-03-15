@@ -5,9 +5,8 @@ from event.event_queue import event_queue, event
 from utils.utils import *
 import json
 import os
-import time
+import csv
 from datetime import datetime
-import threading
 
 class engine:
     def __init__(self, conf_path):
@@ -59,6 +58,7 @@ class engine:
             print("Exiting...")
             exit()
         self.__generate_events(simulation_conf["simulation_config"])
+        self.dump_events_to_file()
              
         s_conf.close()
         
@@ -90,10 +90,12 @@ class engine:
         
         count = 0
         for app in self.__applications:
-            e = event(app.get_id(), generate_event_id(count), random_date(self.__start_date, self.__end_date, random.random()), self.is_event_urgent())
-            self.__event_queue.add_event(e)
-            count = count + 1
-            
+            rand_date = random_date(self.__start_date, self.__end_date, random.random())
+            is_urgent = self.is_event_urgent()
+            for key in app.get_nodes():
+                e = event(generate_event_id(count), app.get_id(), app.get_nodes()[key].get_id(), rand_date, is_urgent)
+                self.__event_queue.add_event(e)
+                count = count + 1
     
     def __generate_applications(self, app_conf):
         self.__applications = []
@@ -106,7 +108,7 @@ class engine:
         for i in range(int(app_conf["number_of_applications"])):
             a = application(generate_app_name(i), app_conf["app_spec"])
             self.__applications.append(a)
-            a.print() 
+            a.print()
             
     def is_event_urgent(self):
         r = random.random()
@@ -114,10 +116,25 @@ class engine:
             return True
         return False   
         
-    def dump_to_file(self):
+    def dump_events_to_file(self):
         print("Generating report to directory {}".format(self.__out_dir))
         
         if not os.path.exists(generate_os_path(self.__out_dir)):
             print("Directory {} doesn't exist. Creating directory {}".format(self.__out_dir, self.__out_dir))
             os.mkdir(generate_os_path(self.__out_dir))
+        else:
+            print("Directory {} already exist. Please remove and execute again.")
+            print("Exiting...")
+            exit()
+            
+        with open(os.path.join(generate_os_path(self.__out_dir), "Events.csv"), 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=self.__event_queue.field_names())
+            writer.writeheader()
+            writer.writerows(self.__event_queue.format_csv())
+            
+        
+            
+            
+        
+        
             

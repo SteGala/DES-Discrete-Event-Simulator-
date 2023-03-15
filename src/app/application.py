@@ -12,6 +12,9 @@ class application:
         
     def get_id(self):
         return self.__id
+    
+    def get_nodes(self):
+        return self.__nodes
         
     def __create_randomized_application(self, config):
         self.__nodes = {}

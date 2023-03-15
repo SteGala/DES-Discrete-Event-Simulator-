@@ -30,8 +30,6 @@ def generate_os_path(original):
 def check_correct_application_config(config):
     if "number_of_applications" not in config:
         return False
-    if "application_urgency_ratio" not in config["app_spec"]:
-        return False
     if "min_n_node" not in config["app_spec"]:
         return False
     if "max_n_node" not in config["app_spec"]:
@@ -81,6 +79,6 @@ def str_time_prop(start, end, time_format, prop):
     return time.strftime(time_format, time.localtime(ptime))
 
 def random_date(start, end, prop):
-    return str_time_prop(start, end, time_format, prop)
+    return str_time_prop(start.strftime(time_format), end.strftime(time_format), time_format, prop)
 
     

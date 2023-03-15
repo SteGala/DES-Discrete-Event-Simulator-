@@ -1,7 +1,7 @@
 import random
 from infra.infrastructure import infrastructure
 from app.application import application
-from event.event_queue import event_queue 
+from event.event_queue import event_queue, event
 from utils.utils import *
 import json
 import os
@@ -51,13 +51,17 @@ class engine:
         print("Generate placement events for the simulation")
         a_conf = open(generate_os_path(simulation_conf["app_config"]))
         application_conf = json.load(a_conf)     
-        self.__generate_placement_events(application_conf)
+        self.__generate_applications(application_conf)
         a_conf.close()
         
+        if "simulation_config" not in simulation_conf:
+            print("Missing simulation config parameters in config file. Field 'simulation_config' missing")
+            print("Exiting...")
+            exit()
+        self.__generate_events(simulation_conf["simulation_config"])
+             
         s_conf.close()
         
-        self.__infra.print()
-
     def start_simulation(self):
         print("Starting simulation main loop")
         self.__main_engine_loop()      
@@ -66,8 +70,32 @@ class engine:
     def __main_engine_loop(self):
         pass
     
-    def __generate_placement_events(self, app_conf):
+    def __generate_events(self, config):
+        if ("start_date" not in config) or ("end_date" not in config) or ("event_distribution" not in config) or ("application_urgency_ratio" not in config):
+            print("Simulation config is not properly defined, missing one or more of the fields 'start_date', 'end_date', 'event_distribution', 'application_urgency_ratio'")
+            print("Exiting...")
+            exit()
+        
+        accepted_distribution = ["random"]
+        if config["event_distribution"] not in accepted_distribution:
+            print("Event distribution '{}' not supported. Select one {}".format(config["event_distribution"], accepted_distribution))
+            print("Exiting...")
+            exit()
+            
+        self.__application_urgency = float(config["application_urgency_ratio"])
+        self.__start_date = datetime.strptime(config["start_date"], time_format)
+        self.__end_date = datetime.strptime(config["end_date"], time_format)
+            
         self.__event_queue = event_queue()
+        
+        count = 0
+        for app in self.__applications:
+            e = event(app.get_id(), generate_event_id(count), random_date(self.__start_date, self.__end_date, random.random()), self.is_event_urgent())
+            self.__event_queue.add_event(e)
+            count = count + 1
+            
+    
+    def __generate_applications(self, app_conf):
         self.__applications = []
         
         if not check_correct_application_config(app_conf):
@@ -78,7 +106,13 @@ class engine:
         for i in range(int(app_conf["number_of_applications"])):
             a = application(generate_app_name(i), app_conf["app_spec"])
             self.__applications.append(a)
-            a.print()    
+            a.print() 
+            
+    def is_event_urgent(self):
+        r = random.random()
+        if r <= self.__application_urgency:
+            return True
+        return False   
         
     def dump_to_file(self):
         print("Generating report to directory {}".format(self.__out_dir))

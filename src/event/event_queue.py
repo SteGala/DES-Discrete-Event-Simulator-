@@ -18,7 +18,7 @@ class event_queue:
             self.events.append(event)
         else:
             for i, e in enumerate(self.events):
-                if event.arrival_time < e.arrival_time:
+                if event.__arrival_time < e.__arrival_time:
                     self.events.insert(i, event)
                     break
             else:

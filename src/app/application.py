@@ -7,9 +7,11 @@ class application:
     
     def __init__(self, id, config):
         self.__id = id
-        self.__is_urgent = self.is_application_urgent(config)
         
         self.__create_randomized_application(config)
+        
+    def get_id(self):
+        return self.__id
         
     def __create_randomized_application(self, config):
         self.__nodes = {}
@@ -89,12 +91,6 @@ class application:
                 # Update the list
                 temp = self.DFSUtil(temp, i, visited)
         return temp
-    
-    def is_application_urgent(self, config):
-        r = random.random()
-        if r <= config["application_urgency_ratio"]:
-            return True
-        return False
     
     def print(self):
         print()

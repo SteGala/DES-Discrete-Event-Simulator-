@@ -2,7 +2,6 @@
     "number_of_applications": 1,
     "app_spec":
     {
-        "application_urgency_ratio": 0.1,
         "min_n_node": 10,
         "max_n_node": 10,
         "min_task_n_core_requirements": "1000m",

@@ -20,22 +20,10 @@ class engine:
         s_conf = open(generate_os_path(conf_path))
         simulation_conf = json.load(s_conf)
         
-        if "name" not in simulation_conf:
-            print("Missing simulation name in config file. Filed 'name' missing")
-            print("Exiting...")
-            exit()
+        self.perform_preliminary_checks(simulation_conf)
+        
         self.__simulation_name = simulation_conf["name"]
         
-        if "out_dir" not in simulation_conf:
-            print("Missing simulation output dir in config file. Field 'out_dir' missing")
-            print("Exiting...")
-            exit()
-        self.__out_dir = simulation_conf["out_dir"]
-        
-        if "infra_config" not in simulation_conf:
-            print("Missing infrastructure template in config file. Field 'infra_config' missing")
-            print("Exiting...")
-            exit()
         print("Loading infrastructure from config file {}".format(simulation_conf["infra_config"]))
         self.__infra = infrastructure() 
         i_conf = open(generate_os_path(simulation_conf["infra_config"]))
@@ -43,24 +31,53 @@ class engine:
         self.__infra.load_infrastructure(infrastructure_conf)
         i_conf.close()
             
-        if "app_config" not in simulation_conf:
-            print("Missing application template in config file. Field 'app_config' missing")
-            print("Exiting...")
-            exit()
         print("Generate placement events for the simulation")
         a_conf = open(generate_os_path(simulation_conf["app_config"]))
         application_conf = json.load(a_conf)     
         self.__generate_applications(application_conf)
         a_conf.close()
         
-        if "simulation_config" not in simulation_conf:
-            print("Missing simulation config parameters in config file. Field 'simulation_config' missing")
-            print("Exiting...")
-            exit()
         self.__generate_events(simulation_conf["simulation_config"])
         self.dump_events_to_file()
              
         s_conf.close()
+        
+    def perform_preliminary_checks(self, simulation_conf):
+        if "name" not in simulation_conf:
+            print("Missing simulation name in config file. Filed 'name' missing")
+            print("Exiting...")
+            exit()
+            
+        if "out_dir" not in simulation_conf:
+            print("Missing simulation output dir in config file. Field 'out_dir' missing")
+            print("Exiting...")
+            exit()
+        self.__out_dir = simulation_conf["out_dir"]
+        print("Generating report to directory {}".format(self.__out_dir))
+        
+        if not os.path.exists(generate_os_path(self.__out_dir)):
+            print("Directory {} doesn't exist. Creating directory {}".format(self.__out_dir, self.__out_dir))
+            os.mkdir(generate_os_path(self.__out_dir))
+        else:
+            print("Directory {} already exist. Please remove and execute again.")
+            print("Exiting...")
+            exit()
+            
+        if "infra_config" not in simulation_conf:
+            print("Missing infrastructure template in config file. Field 'infra_config' missing")
+            print("Exiting...")
+            exit()
+            
+        if "app_config" not in simulation_conf:
+            print("Missing application template in config file. Field 'app_config' missing")
+            print("Exiting...")
+            exit()
+        
+        if "simulation_config" not in simulation_conf:
+            print("Missing simulation config parameters in config file. Field 'simulation_config' missing")
+            print("Exiting...")
+            exit()
+        
         
     def start_simulation(self):
         print("Starting simulation main loop")
@@ -116,18 +133,8 @@ class engine:
             return True
         return False   
         
-    def dump_events_to_file(self):
-        print("Generating report to directory {}".format(self.__out_dir))
-        
-        if not os.path.exists(generate_os_path(self.__out_dir)):
-            print("Directory {} doesn't exist. Creating directory {}".format(self.__out_dir, self.__out_dir))
-            os.mkdir(generate_os_path(self.__out_dir))
-        else:
-            print("Directory {} already exist. Please remove and execute again.")
-            print("Exiting...")
-            exit()
-            
-        with open(os.path.join(generate_os_path(self.__out_dir), "Events.csv"), 'w') as csvfile:
+    def dump_events_to_file(self):          
+        with open(os.path.join(generate_os_path(self.__out_dir), "start_events.csv"), 'w') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=self.__event_queue.field_names())
             writer.writeheader()
             writer.writerows(self.__event_queue.format_csv())

@@ -1,30 +1,43 @@
+from utils.utils import *
+
+class EventType(enumerate):
+    SCHEDULE = 1
+    UNSCHEDULE = 2
+
 class priority(enumerate):
     LOW = 0
     HIGH = 1
 
 class event:
-    def __init__(self, event_id, app_id, task_id, arrival_time, priority):
-        self.__event_id = event_id
+    def __init__(self, app_id, task_ids, arrival_time, priority, type):
         self.__app_id = app_id
-        self.__task_id = task_id
+        self.__task_ids = task_ids
         self.__arrival_time = arrival_time
         self.__priority = priority
+        self.__event_type = type
         
     def to_dict(self):
         return {"id": self.__event_id,
                 "app_id": self.__app_id,
-                "task_id": self.__task_id,
+                "task_id": self.__task_ids,
                 "arrival_time": self.__arrival_time,
                 "priority": self.__priority}       
     
     def get_arrival_time(self):
         return self.__arrival_time 
+    
+    def set_event_id(self, event_id):
+        self.__event_id = event_id
 
 class event_queue:
     def __init__(self):
         self.events = []
+        self.__event_id = 0
         
     def add_event(self, event):
+        event.set_event_id(generate_event_id(self.__event_id))
+        self.__event_id = self.__event_id + 1
+        
         if not self.events:
             self.events.append(event)
         else:

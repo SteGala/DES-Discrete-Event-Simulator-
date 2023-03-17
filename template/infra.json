@@ -18,6 +18,14 @@
             "p_static": 2,
             "k": 2,
             "alpha": 2
+        },
+        {
+            "id": "ccc",
+            "n_core": 10,
+            "core_frequency": "1.8G",
+            "p_static": 2,
+            "k": 2,
+            "alpha": 2
         }
     ],
 
@@ -26,6 +34,16 @@
         {
             "from": "aaa",
             "to": "bbb",
+            "resource": "1G"
+        },
+        {
+            "from": "bbb",
+            "to": "ccc",
+            "resource": "1G"
+        },
+        {
+            "from": "aaa",
+            "to": "ccc",
             "resource": "1G"
         }
     ]

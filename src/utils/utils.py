@@ -59,6 +59,9 @@ def generate_app_node_id(id):
 def generate_app_edge_id(id):
     return "app_edge_" + str(id)
 
+def generate_infra_edge_id(id):
+    return "app_edge_" + str(id)
+
 def generate_event_id(id):
     return "event_" + str(id)
 

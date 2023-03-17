@@ -1,7 +1,7 @@
 import random
 from infra.infrastructure import infrastructure
 from app.application import application
-from event.event_queue import event_queue, event
+from event.event_queue import event_queue, event, EventType
 from utils.utils import *
 import json
 import os
@@ -11,7 +11,7 @@ from datetime import datetime
 class engine:
     def __init__(self, conf_path):
         """Instantiate the engine class. 
-
+        
         Args:
             conf_path (string): path of the configuration file for the simulation.The path is relative to the root of the repository
         """        
@@ -29,6 +29,7 @@ class engine:
         i_conf = open(generate_os_path(simulation_conf["infra_config"]))
         infrastructure_conf = json.load(i_conf)
         self.__infra.load_infrastructure(infrastructure_conf)
+        self.__infra.save_as_dot(generate_os_path(self.__out_dir))
         i_conf.close()
             
         print("Generate placement events for the simulation")
@@ -85,7 +86,9 @@ class engine:
                   
     #main simulation loop, in charge of creating events to the event queue
     def __main_engine_loop(self):
-        pass
+        return
+        while not self.__event_queue.is_empty():
+            pass
     
     def __generate_events(self, config):
         if ("start_date" not in config) or ("end_date" not in config) or ("event_distribution" not in config) or ("application_urgency_ratio" not in config):
@@ -109,10 +112,10 @@ class engine:
         for app in self.__applications:
             rand_date = random_date(self.__start_date, self.__end_date, random.random())
             is_urgent = self.is_event_urgent()
-            for key in app.get_nodes():
-                e = event(generate_event_id(count), app.get_id(), app.get_nodes()[key].get_id(), rand_date, is_urgent)
-                self.__event_queue.add_event(e)
-                count = count + 1
+            
+            e = event(app.get_id(), list(app.get_nodes().keys()), rand_date, is_urgent, EventType.SCHEDULE)
+            self.__event_queue.add_event(e)
+            count = count + 1
     
     def __generate_applications(self, app_conf):
         self.__applications = []

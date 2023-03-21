@@ -2,6 +2,8 @@ import random
 from app.node import app_node
 from app.edge import app_edge
 from utils.utils import *
+import pygraphviz as pgv
+
 
 class application:
     
@@ -109,3 +111,17 @@ class application:
                 print("\t(X) -> ({})".format(e.get_to()), end="")
             print()
         print()
+        
+    def save_as_dot(self, path):
+        G = pgv.AGraph(directed=False)
+        G.node_attr["shape"] = "box"
+        
+        for key in self.__edges:
+            for e in self.__edges[key]:
+                G.add_edge(e.get_from(), e.get_to(), label=e.as_dot_label())
+                n = G.get_node(e.get_from())  
+                n.attr["label"] = self.__nodes[e.get_from()].as_dot_label()
+                n = G.get_node(e.get_to())  
+                n.attr["label"] = self.__nodes[e.get_to()].as_dot_label()      
+                
+        G.write(os.path.join(path, "application_" + self.__id + ".dot"))

@@ -86,6 +86,18 @@ class infrastructure:
             print()
         print()
         
+    def get_available_nodes(self, n_core, amount):
+        ret = []
+        
+        for key in self.__nodes:
+            if self.__nodes[key].can_host(n_core, amount):
+                ret.append(self.__nodes[key])
+                
+        return ret
+    
+    def get_nodes(self):
+        return self.__nodes
+        
     def save_as_dot(self, path):
         G = pgv.AGraph(directed=False)
         G.node_attr["shape"] = "box"

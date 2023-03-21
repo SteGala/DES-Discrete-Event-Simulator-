@@ -3,6 +3,7 @@ from infra.infrastructure import infrastructure
 from app.application import application
 from event.event_queue import event_queue, event, EventType
 from utils.utils import *
+from schedule.schedule import dummy_scheduler
 import json
 import os
 import csv
@@ -39,9 +40,14 @@ class engine:
         a_conf.close()
         
         self.__generate_events(simulation_conf["simulation_config"])
-        self.dump_events_to_file()
+        #self.dump_events_to_file()
              
         s_conf.close()
+        
+        self.__scheduler = dummy_scheduler(self.__infra)
+        
+        self.__power_events = []
+        self.__resource_events = []
         
     def perform_preliminary_checks(self, simulation_conf):
         if "name" not in simulation_conf:
@@ -86,9 +92,30 @@ class engine:
                   
     #main simulation loop, in charge of creating events to the event queue
     def __main_engine_loop(self):
-        return
         while not self.__event_queue.is_empty():
-            pass
+            event = self.__event_queue.remove_next_event()
+            self.__handle_event(event)
+            
+            
+            self.__save_current_status()
+                
+        print(self.__resource_events)
+        
+    def __handle_event(self, event):
+        self.__scheduler.schedule(self.__applications[event.get_app_id()])
+    
+    def __save_current_status(self):
+        d = {}
+        s = {}
+        d["date"] = event.get_arrival_time()
+        s["date"] = event.get_arrival_time()
+            
+        for key in self.__infra.get_nodes():
+            d[key] = self.__infra.get_nodes()[key].compute_power_comsumption()
+            s[key] = self.__infra.get_nodes()[key].compute_resource_usage()
+            
+        self.__power_events.append(d)
+        self.__resource_events.append(s)
     
     def __generate_events(self, config):
         if ("start_date" not in config) or ("end_date" not in config) or ("event_distribution" not in config) or ("application_urgency_ratio" not in config):
@@ -113,12 +140,12 @@ class engine:
             rand_date = random_date(self.__start_date, self.__end_date, random.random())
             is_urgent = self.is_event_urgent()
             
-            e = event(app.get_id(), list(app.get_nodes().keys()), rand_date, is_urgent, EventType.SCHEDULE)
+            e = event(self.__applications[app].get_id(), list(self.__applications[app].get_nodes().keys()), rand_date, is_urgent, EventType.SCHEDULE)
             self.__event_queue.add_event(e)
             count = count + 1
     
     def __generate_applications(self, app_conf):
-        self.__applications = []
+        self.__applications = {}
         
         if not check_correct_application_config(app_conf):
             print("The application config file is not correct.")
@@ -127,8 +154,8 @@ class engine:
             
         for i in range(int(app_conf["number_of_applications"])):
             a = application(generate_app_name(i), app_conf["app_spec"])
-            self.__applications.append(a)
-            a.print()
+            self.__applications[generate_app_name(i)] = a
+            a.save_as_dot(generate_os_path(self.__out_dir))
             
     def is_event_urgent(self):
         r = random.random()
@@ -137,7 +164,7 @@ class engine:
         return False   
         
     def dump_events_to_file(self):          
-        with open(os.path.join(generate_os_path(self.__out_dir), "start_events.csv"), 'w') as csvfile:
+        with open(os.path.join(generate_os_path(self.__out_dir), "events.csv"), 'w') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=self.__event_queue.field_names())
             writer.writeheader()
             writer.writerows(self.__event_queue.format_csv())

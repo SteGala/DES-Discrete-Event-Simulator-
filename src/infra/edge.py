@@ -8,6 +8,7 @@ class infra_edge:
         self.__to_node_id = to_node_id
         self.__resource_human_format = resource_human_format
         self.__resource = human_format_to_float(resource_human_format)
+        self.__resource_used = 0
         
     def get_resource_human_format(self):
         return self.__resource_human_format
@@ -23,3 +24,22 @@ class infra_edge:
     
     def get_to(self):
         return self.__to_node_id
+    
+    def can_host(self, amount):
+        if self.__resource_used + amount > self.__resource:
+            return False
+        return True
+    
+    def consume_resources(self, amount):
+        if not self.can_host(amount):
+            return False
+        
+        self.__resource_used = self.__resource_used + amount
+        return True
+    
+    def release_resources(self, amount):
+        if self.__resource_used < amount:
+            return False
+        
+        self.__resource_used = self.__resource_used - amount
+        return True

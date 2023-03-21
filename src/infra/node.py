@@ -27,4 +27,40 @@ class infra_node:
             cons = cons + self.__k*(i**self.__alpha)
             
         return cons + self.__p_static
+    
+    def compute_resource_usage(self):
+        return round((self.__operating_frequency[0] / self.__max_frequency) * 100, 2)
+    
+    def can_host(self, n_core, amount):
+        tot = n_core * amount
+        load_per_core = tot / self.__n_cores
+        
+        for f in self.__operating_frequency:
+            if f + load_per_core > self.__max_frequency:
+                return False
+            
+        return True
+    
+    def consume_resources(self, n_core, amount):
+        if not self.can_host(n_core, amount):
+            return False
+        
+        tot = n_core * amount
+        load_per_core = tot / self.__n_cores
+        
+        for i in range(len(self.__operating_frequency)):
+            self.__operating_frequency[i] = self.__operating_frequency[i] + load_per_core
+            
+        return True
+    
+    def release_resources(self, n_core, amount):
+        tot = n_core * amount
+        load_per_core = tot / self.__n_cores
+        
+        for f in self.__operating_frequency:
+            if f < load_per_core:
+                return False
+            f = f - load_per_core
+
+        return True
         

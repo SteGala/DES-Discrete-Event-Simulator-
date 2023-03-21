@@ -28,6 +28,12 @@ class event:
     
     def set_event_id(self, event_id):
         self.__event_id = event_id
+        
+    def get_app_id(self):
+        return self.__app_id
+    
+    def get_event_type(self):
+        return self.__event_type
 
 class event_queue:
     def __init__(self):

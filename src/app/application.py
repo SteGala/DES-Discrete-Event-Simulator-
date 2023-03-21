@@ -68,6 +68,9 @@ class application:
             if e.get_to() == generate_app_node_id(node2):
                 return True
         return False
+    
+    def get_task_by_id(self, task_id):
+        return self.__nodes[task_id]
                 
     def connectedComponents(self):
         visited = []

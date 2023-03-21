@@ -86,17 +86,20 @@ class infrastructure:
             print()
         print()
         
-    def get_available_nodes(self, n_core, amount):
+    def get_available_nodes(self, n_core):
         ret = []
         
         for key in self.__nodes:
-            if self.__nodes[key].can_host(n_core, amount):
+            if self.__nodes[key].can_host(n_core):
                 ret.append(self.__nodes[key])
                 
         return ret
     
     def get_nodes(self):
         return self.__nodes
+    
+    def get_nodes_name(self):
+        return list(self.__nodes.keys())
         
     def save_as_dot(self, path):
         G = pgv.AGraph(directed=False)

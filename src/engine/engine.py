@@ -7,7 +7,8 @@ from schedule.schedule import dummy_scheduler
 import json
 import os
 import csv
-from datetime import datetime
+import datetime
+from datetime import datetime as dt
 
 class engine:
     def __init__(self, conf_path):
@@ -97,18 +98,31 @@ class engine:
             self.__handle_event(event)
             
             
-            self.__save_current_status()
+            self.__save_current_status(event)
                 
-        print(self.__resource_events)
+        self.dump_result_to_file()
         
-    def __handle_event(self, event):
-        self.__scheduler.schedule(self.__applications[event.get_app_id()])
-    
-    def __save_current_status(self):
+    def __handle_event(self, cur_event):
+        if cur_event.get_event_type() == EventType.SCHEDULE:
+            target_app = self.__applications[cur_event.get_app_id()]
+            success, placement = self.__scheduler.schedule(target_app)
+            if success:
+                for key in placement:
+                    execution_time = self.__infra.get_nodes()[placement[key]].get_expected_completion_time(target_app.get_task_by_id(key).get_n_operations())
+                    ev_date = cur_event.get_arrival_time() + datetime.timedelta(seconds=execution_time)
+                    new_ev = event(target_app.get_id(), key, ev_date, self.is_event_urgent(), EventType.UNSCHEDULE)
+                    self.__event_queue.add_event(new_ev)
+                    target_app.get_nodes()[key].schedule_on_node(placement[key])
+                    
+        elif cur_event.get_event_type() == EventType.UNSCHEDULE:
+            target_app = self.__applications[cur_event.get_app_id()]
+            self.__scheduler.unschedule(target_app.get_nodes()[cur_event.get_task_id()])
+                      
+    def __save_current_status(self, event):
         d = {}
         s = {}
-        d["date"] = event.get_arrival_time()
-        s["date"] = event.get_arrival_time()
+        d["date"] = event.get_arrival_time().strftime(time_format)
+        s["date"] = event.get_arrival_time().strftime(time_format)
             
         for key in self.__infra.get_nodes():
             d[key] = self.__infra.get_nodes()[key].compute_power_comsumption()
@@ -130,8 +144,8 @@ class engine:
             exit()
             
         self.__application_urgency = float(config["application_urgency_ratio"])
-        self.__start_date = datetime.strptime(config["start_date"], time_format)
-        self.__end_date = datetime.strptime(config["end_date"], time_format)
+        self.__start_date = dt.strptime(config["start_date"], time_format)
+        self.__end_date = dt.strptime(config["end_date"], time_format)
             
         self.__event_queue = event_queue()
         
@@ -169,6 +183,20 @@ class engine:
             writer.writeheader()
             writer.writerows(self.__event_queue.format_csv())
             
+    def dump_result_to_file(self):
+        node_names = self.__infra.get_nodes_name()
+        headers = ["date"]
+        headers.extend(node_names)
+        
+        with open(os.path.join(generate_os_path(self.__out_dir), "power_events.csv"), 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=headers)
+            writer.writeheader()
+            writer.writerows(self.__power_events)
+            
+        with open(os.path.join(generate_os_path(self.__out_dir), "resource_events.csv"), 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=headers)
+            writer.writeheader()
+            writer.writerows(self.__resource_events)
         
             
             

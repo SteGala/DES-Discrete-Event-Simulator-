@@ -20,7 +20,7 @@ class event:
         return {"id": self.__event_id,
                 "app_id": self.__app_id,
                 "task_id": self.__task_ids,
-                "arrival_time": self.__arrival_time,
+                "arrival_time": self.__arrival_time.strftime(time_format),
                 "priority": self.__priority}       
     
     def get_arrival_time(self):
@@ -34,6 +34,10 @@ class event:
     
     def get_event_type(self):
         return self.__event_type
+    
+    def get_task_id(self):
+        return self.__task_ids
+    
 
 class event_queue:
     def __init__(self):

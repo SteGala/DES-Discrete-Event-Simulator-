@@ -1,6 +1,8 @@
 from exception.exception import InvalidConversionException
 import os
 import time
+from datetime import datetime
+
 
 time_format = "%d/%m/%Y %H:%M:%S"
 
@@ -82,6 +84,6 @@ def str_time_prop(start, end, time_format, prop):
     return time.strftime(time_format, time.localtime(ptime))
 
 def random_date(start, end, prop):
-    return str_time_prop(start.strftime(time_format), end.strftime(time_format), time_format, prop)
+    return datetime.strptime(str_time_prop(start.strftime(time_format), end.strftime(time_format), time_format, prop), time_format)
 
     

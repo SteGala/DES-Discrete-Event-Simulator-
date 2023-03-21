@@ -7,7 +7,7 @@
         "min_task_n_core_requirements": "1000m",
         "max_task_n_core_requirements": "2000m",
         "min_task_operation_requirements": "1G",
-        "max_task_operation_requirements": "1.2G",
+        "max_task_operation_requirements": "101.2G",
         "min_task_edge_requirements": "1M",
         "max_task_edge_requirements": "1G",
         "task_connectivity_ratio": 0.4

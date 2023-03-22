@@ -20,8 +20,10 @@ class dummy_scheduler:
     
     def unschedule(self, task):
         n = self.__infrastructure.get_nodes()[task.scheduled_on_infra_node()]
-        n.release_resources(task.get_n_core())
-        self.__infrastructure.get_nodes()[task.scheduled_on_infra_node()] = n
+        success = n.release_resources(task.get_n_core())
+        if success:
+            self.__infrastructure.get_nodes()[task.scheduled_on_infra_node()] = n
+        return success
                      
     def __recursive_schedule(self, tasks, scheduled, depth):
         if depth == len(tasks):

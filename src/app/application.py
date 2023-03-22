@@ -4,6 +4,7 @@ from app.edge import app_edge
 from utils.utils import *
 import pygraphviz as pgv
 
+random.seed(10)
 
 class application:
     

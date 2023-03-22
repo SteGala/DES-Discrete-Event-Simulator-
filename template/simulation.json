@@ -7,7 +7,7 @@
     "simulation_config":
     {
         "start_date": "27/12/2022 10:00:00", 
-        "end_date": "27/12/2022 11:00:00", 
+        "end_date": "27/12/2022 10:04:00", 
         "event_distribution": "random",
         "application_urgency_ratio": 0.1
     }

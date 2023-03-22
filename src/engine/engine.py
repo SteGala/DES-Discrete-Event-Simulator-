@@ -49,6 +49,7 @@ class engine:
         
         self.__power_events = []
         self.__resource_events = []
+        self.__log_events = []
         
     def perform_preliminary_checks(self, simulation_conf):
         if "name" not in simulation_conf:
@@ -89,16 +90,15 @@ class engine:
         
     def start_simulation(self):
         print("Starting simulation main loop")
-        self.__main_engine_loop()      
+        self.__main_engine_loop() 
+        print("Simulation complete")     
                   
     #main simulation loop, in charge of creating events to the event queue
     def __main_engine_loop(self):
         while not self.__event_queue.is_empty():
             event = self.__event_queue.remove_next_event()
-            self.__handle_event(event)
-            
-            
-            self.__save_current_status(event)
+            success = self.__handle_event(event)
+            self.__save_current_status(event, success)
                 
         self.dump_result_to_file()
         
@@ -116,21 +116,35 @@ class engine:
                     
         elif cur_event.get_event_type() == EventType.UNSCHEDULE:
             target_app = self.__applications[cur_event.get_app_id()]
-            self.__scheduler.unschedule(target_app.get_nodes()[cur_event.get_task_id()])
+            success = self.__scheduler.unschedule(target_app.get_nodes()[cur_event.get_task_id()])
+            
+        return success
                       
-    def __save_current_status(self, event):
-        d = {}
-        s = {}
-        d["date"] = event.get_arrival_time().strftime(time_format)
-        s["date"] = event.get_arrival_time().strftime(time_format)
+    def __save_current_status(self, event: event, status):
+        p = {}
+        r = {}
+        e = {}
+        p["date"] = event.get_arrival_time().strftime(time_format)
+        r["date"] = event.get_arrival_time().strftime(time_format)
+        e["date"] = event.get_arrival_time().strftime(time_format)
             
         for key in self.__infra.get_nodes():
-            d[key] = self.__infra.get_nodes()[key].compute_power_comsumption()
-            s[key] = self.__infra.get_nodes()[key].compute_resource_usage()
+            p[key] = self.__infra.get_nodes()[key].compute_power_comsumption()
+            r[key] = self.__infra.get_nodes()[key].compute_resource_usage()
             
-        self.__power_events.append(d)
-        self.__resource_events.append(s)
-    
+        self.__power_events.append(p)
+        self.__resource_events.append(r)
+        
+        e["type"] = event.get_event_type().name
+        e["success"] = status
+        
+        if event.get_event_type() == EventType.SCHEDULE:
+            e["note"] = "App: {}".format(event.get_app_id())
+        else:
+            e["note"] = "Task: {}".format(event.get_task_id())
+        
+        self.__log_events.append(e)
+        
     def __generate_events(self, config):
         if ("start_date" not in config) or ("end_date" not in config) or ("event_distribution" not in config) or ("application_urgency_ratio" not in config):
             print("Simulation config is not properly defined, missing one or more of the fields 'start_date', 'end_date', 'event_distribution', 'application_urgency_ratio'")
@@ -184,19 +198,26 @@ class engine:
             writer.writerows(self.__event_queue.format_csv())
             
     def dump_result_to_file(self):
+        print("Generating output result files")
         node_names = self.__infra.get_nodes_name()
-        headers = ["date"]
-        headers.extend(node_names)
+        node_headers = ["date"]
+        node_headers.extend(node_names)
+        log_headers = ["date", "type", "success", "note"]
         
         with open(os.path.join(generate_os_path(self.__out_dir), "power_events.csv"), 'w') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=headers)
+            writer = csv.DictWriter(csvfile, fieldnames=node_headers)
             writer.writeheader()
             writer.writerows(self.__power_events)
             
         with open(os.path.join(generate_os_path(self.__out_dir), "resource_events.csv"), 'w') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=headers)
+            writer = csv.DictWriter(csvfile, fieldnames=node_headers)
             writer.writeheader()
             writer.writerows(self.__resource_events)
+            
+        with open(os.path.join(generate_os_path(self.__out_dir), "log_events.csv"), 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=log_headers)
+            writer.writeheader()
+            writer.writerows(self.__log_events)
         
             
             

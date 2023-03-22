@@ -45,14 +45,14 @@ class infra_node:
         load_per_core = tot / self.__n_cores
         
         for i in range(len(self.__operating_frequency)):
-            self.__operating_frequency[i] = self.__operating_frequency[i] + load_per_core
+            self.__operating_frequency[i] = self.__operating_frequency[i] + int(load_per_core)
             
         self.__n_cores_used = self.__n_cores_used + n_core
         return True
     
     def release_resources(self, n_core):
         tot = n_core * self.__max_frequency
-        load_per_core = tot / self.__n_cores
+        load_per_core = int(tot / self.__n_cores)
         
         for i in range(len(self.__operating_frequency)):
             if self.__operating_frequency[i] < load_per_core:

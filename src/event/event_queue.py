@@ -1,10 +1,11 @@
 from utils.utils import *
+from enum import Enum
 
-class EventType(enumerate):
+class EventType(Enum):
     SCHEDULE = 1
     UNSCHEDULE = 2
 
-class priority(enumerate):
+class priority(Enum):
     LOW = 0
     HIGH = 1
 

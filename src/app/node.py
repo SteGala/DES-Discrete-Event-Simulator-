@@ -1,7 +1,6 @@
 from humanize import *
 
-class app_node:
-    
+class app_node: 
     def __init__(self, id, cores, operations):
         self.__id = id
         self.__cores = cores

@@ -72,7 +72,10 @@ class application:
     
     def get_task_by_id(self, task_id):
         return self.__nodes[task_id]
-                
+    
+    def get_task_n_operations(self, task_id):
+        return self.__nodes[task_id].get_n_operations()
+                    
     def connectedComponents(self):
         visited = []
         cc = []

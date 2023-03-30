@@ -55,8 +55,8 @@ def check_correct_application_config(config):
 def generate_app_name(id):
     return "app_" + str(id)
 
-def generate_app_node_id(id):
-    return "app_node_" + str(id)
+def generate_app_node_id(app_name, id):
+    return app_name + "_task_" + str(id)
     
 def generate_app_edge_id(id):
     return "app_edge_" + str(id)

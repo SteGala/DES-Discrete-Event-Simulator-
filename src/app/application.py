@@ -37,9 +37,9 @@ class application:
             task_n_core_requirements = random.uniform(min_task_n_core_requirements, max_task_n_core_requirements)
             task_operation_requirements = random.uniform(min_task_operation_requirements, max_task_operation_requirements)
             
-            n = app_node(generate_app_node_id(i), task_n_core_requirements, task_operation_requirements)
-            self.__nodes[generate_app_node_id(i)] = n
-            self.__edges[generate_app_node_id(i)] = []
+            n = app_node(generate_app_node_id(self.__id, i), task_n_core_requirements, task_operation_requirements)
+            self.__nodes[generate_app_node_id(self.__id, i)] = n
+            self.__edges[generate_app_node_id(self.__id, i)] = []
             
         task_connectivity_ratio = float(config["task_connectivity_ratio"])
         n_edge = (n_node * (n_node - 1))/2
@@ -55,18 +55,18 @@ class application:
             
             if n1 != n2 and not self.__has_edge(n1, n2):
                 task_edge_requirements = random.uniform(min_task_edge_requirements, max_task_edge_requirements)
-                e1 = app_edge(generate_app_edge_id(self.__n_edges), generate_app_node_id(n1), generate_app_node_id(n2), task_edge_requirements)
-                e2 = app_edge(generate_app_edge_id(self.__n_edges), generate_app_node_id(n2), generate_app_node_id(n1), task_edge_requirements)
+                e1 = app_edge(generate_app_edge_id(self.__n_edges), generate_app_node_id(self.__id, n1), generate_app_node_id(self.__id, n2), task_edge_requirements)
+                e2 = app_edge(generate_app_edge_id(self.__n_edges), generate_app_node_id(self.__id, n2), generate_app_node_id(self.__id, n1), task_edge_requirements)
                 
-                self.__edges[generate_app_node_id(n1)].append(e1)
-                self.__edges[generate_app_node_id(n2)].append(e2)
+                self.__edges[generate_app_node_id(self.__id, n1)].append(e1)
+                self.__edges[generate_app_node_id(self.__id, n2)].append(e2)
                 
                 self.__n_edges = self.__n_edges + 1
        
             
     def __has_edge(self, node1, node2):
-        for e in self.__edges[generate_app_node_id(node1)]:
-            if e.get_to() == generate_app_node_id(node2):
+        for e in self.__edges[generate_app_node_id(self.__id, node1)]:
+            if e.get_to() == generate_app_node_id(self.__id, node2):
                 return True
         return False
     

@@ -7,12 +7,14 @@
     "simulation_config":
     {
         "start_date": "27/12/2022 10:00:00", 
-        "end_date": "27/12/2022 10:04:00", 
+        "end_date": "27/12/2022 10:02:00", 
         "event_distribution": "random",
-        "application_urgency_ratio": 0.1,
+        "application_urgency_ratio": 1,
         "scheduling_algorithm": 
         {
-            "name": "FIFO"
+            "name": "FIFO",
+            "retry_after_failure_seconds": 10,
+            "use_priority": true
         },
         "alloation_algorithm": 
         {

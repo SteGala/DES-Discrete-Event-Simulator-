@@ -1,7 +1,7 @@
 import random
 from infra.infrastructure import infrastructure
 from app.application import application
-from event.event_queue import event_queue, event, EventType
+from event.event_queue import event_queue, event, EventType, priority
 from utils.utils import *
 from allocate.first_fit import first_fit_allocator
 import json
@@ -9,6 +9,7 @@ import os
 import csv
 import datetime
 from datetime import datetime as dt
+import copy
 
 class engine:
     def __init__(self, conf_path):
@@ -41,7 +42,6 @@ class engine:
         a_conf.close()
         
         self.__generate_events(simulation_conf["simulation_config"])
-        #self.dump_events_to_file()
              
         s_conf.close()
         
@@ -126,7 +126,13 @@ class engine:
                     self.__event_queue.add_event(new_ev)
                     target_app.get_nodes()[key].schedule_on_node(placement[key])
             else:
-                pass
+                if self.__retry_after_failure_seconds != 0:
+                    new_ev = copy.copy(cur_event)
+                    if self.__use_priority and (cur_event.get_priority() == priority.HIGH):    
+                        new_ev.set_arrival_time(self.__event_queue.get_next_event_time() + datetime.timedelta(milliseconds=1))
+                    else:           
+                        new_ev.set_arrival_time(cur_event.get_arrival_time() + datetime.timedelta(seconds=self.__retry_after_failure_seconds))
+                    self.__event_queue.add_event(new_ev)
                     
         elif cur_event.get_event_type() == EventType.UNSCHEDULE:
             target_app = self.__applications[cur_event.get_app_id()]
@@ -174,8 +180,21 @@ class engine:
         self.__application_urgency = float(config["application_urgency_ratio"])
         self.__start_date = dt.strptime(config["start_date"], time_format)
         self.__end_date = dt.strptime(config["end_date"], time_format)
+        
+        if "scheduling_algorithm" not in config:
+            print("Simulation config is not properly defined, missing 'scheduling_algorithm' configuration.")
+            print("Exiting...")
+            exit()
             
-        self.__event_queue = event_queue()
+        self.__event_queue = event_queue(config["scheduling_algorithm"]["name"])
+        
+        if ("retry_after_failure_seconds" not in config["scheduling_algorithm"]) or ("use_priority" not in config["scheduling_algorithm"]):
+            print("Simulation config is not properly defined, missing 'retry_after_failure_seconds' or 'use_priority' configuration.")
+            print("Exiting...")
+            exit()
+            
+        self.__retry_after_failure_seconds = int(config["scheduling_algorithm"]["retry_after_failure_seconds"])
+        self.__use_priority = config["scheduling_algorithm"]["use_priority"]
         
         count = 0
         for app in self.__applications:
@@ -202,8 +221,8 @@ class engine:
     def is_event_urgent(self):
         r = random.random()
         if r <= self.__application_urgency:
-            return True
-        return False   
+            return priority.HIGH
+        return priority.LOW   
         
     def dump_events_to_file(self):          
         with open(os.path.join(generate_os_path(self.__out_dir), "events.csv"), 'w') as csvfile:

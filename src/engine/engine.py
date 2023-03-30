@@ -3,7 +3,7 @@ from infra.infrastructure import infrastructure
 from app.application import application
 from event.event_queue import event_queue, event, EventType
 from utils.utils import *
-from schedule.schedule import dummy_scheduler
+from allocate.first_fit import first_fit_allocator
 import json
 import os
 import csv
@@ -45,7 +45,7 @@ class engine:
              
         s_conf.close()
         
-        self.__scheduler = dummy_scheduler(self.__infra)
+        self.__allocator = self.__create_allocator(simulation_conf["simulation_config"])
         
         self.__power_events = []
         self.__resource_events = []
@@ -86,7 +86,19 @@ class engine:
             print("Missing simulation config parameters in config file. Field 'simulation_config' missing")
             print("Exiting...")
             exit()
-        
+            
+    def __create_allocator(self, config):
+        if "alloation_algorithm" not in config:
+            print("Missing allocation algorithm parameter in config file. Field 'alloation_algorithm' missing")
+            print("Exiting...")
+            exit()
+            
+        if config["alloation_algorithm"]["name"] == "first_fit":
+            return first_fit_allocator(self.__infra)
+        else:
+            print("Unknown allocation algorithm {}".format(config["alloation_algorithm"]["name"]))
+            print("Exiting...")
+            exit()
         
     def start_simulation(self):
         print("Starting simulation main loop")
@@ -105,7 +117,7 @@ class engine:
     def __handle_event(self, cur_event):
         if cur_event.get_event_type() == EventType.SCHEDULE:
             target_app = self.__applications[cur_event.get_app_id()]
-            success, placement = self.__scheduler.schedule(target_app)
+            success, placement = self.__allocator.allocate(target_app)
             if success:
                 for key in placement:
                     execution_time = self.__infra.get_nodes()[placement[key]].get_expected_completion_time(target_app.get_task_by_id(key).get_n_operations())
@@ -113,10 +125,12 @@ class engine:
                     new_ev = event(target_app.get_id(), key, ev_date, self.is_event_urgent(), EventType.UNSCHEDULE)
                     self.__event_queue.add_event(new_ev)
                     target_app.get_nodes()[key].schedule_on_node(placement[key])
+            else:
+                pass
                     
         elif cur_event.get_event_type() == EventType.UNSCHEDULE:
             target_app = self.__applications[cur_event.get_app_id()]
-            success = self.__scheduler.unschedule(target_app.get_nodes()[cur_event.get_task_id()])
+            success = self.__allocator.unallocate(target_app.get_nodes()[cur_event.get_task_id()])
             
         return success
                       

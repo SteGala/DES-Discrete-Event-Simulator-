@@ -1,0 +1,61 @@
+strict graph "" {
+	node [label="\N",
+		shape=box
+	];
+	app_node_0	[label="Node: app_node_0
+N Operations: 1.58*201 G"];
+	app_node_6	[label="Node: app_node_6
+N Operations: 1.4*216 G"];
+	app_node_0 -- app_node_6	[label="Edge: app_edge_0
+Max bandwidth: 872 M"];
+	app_node_3	[label="Node: app_node_3
+N Operations: 1.91*265 G"];
+	app_node_0 -- app_node_3	[label="Edge: app_edge_9
+Max bandwidth: 643 M"];
+	app_node_7	[label="Node: app_node_7
+N Operations: 1.58*274 G"];
+	app_node_0 -- app_node_7	[label="Edge: app_edge_10
+Max bandwidth: 808 M"];
+	app_node_9	[label="Node: app_node_9
+N Operations: 1.44*485 G"];
+	app_node_0 -- app_node_9	[label="Edge: app_edge_13
+Max bandwidth: 913 M"];
+	app_node_6 -- app_node_7	[label="Edge: app_edge_7
+Max bandwidth: 329 M"];
+	app_node_8	[label="Node: app_node_8
+N Operations: 1.49*91.3 G"];
+	app_node_6 -- app_node_8	[label="Edge: app_edge_5
+Max bandwidth: 923 M"];
+	app_node_3 -- app_node_9	[label="Edge: app_edge_17
+Max bandwidth: 427 M"];
+	app_node_5	[label="Node: app_node_5
+N Operations: 1.49*236 G"];
+	app_node_3 -- app_node_5	[label="Edge: app_edge_16
+Max bandwidth: 183 M"];
+	app_node_4	[label="Node: app_node_4
+N Operations: 1.6*40.8 G"];
+	app_node_3 -- app_node_4	[label="Edge: app_edge_12
+Max bandwidth: 889 M"];
+	app_node_7 -- app_node_9	[label="Edge: app_edge_3
+Max bandwidth: 834 M"];
+	app_node_7 -- app_node_8	[label="Edge: app_edge_1
+Max bandwidth: 65.9 M"];
+	app_node_1	[label="Node: app_node_1
+N Operations: 1.87*340 G"];
+	app_node_1 -- app_node_5	[label="Edge: app_edge_2
+Max bandwidth: 153 M"];
+	app_node_1 -- app_node_4	[label="Edge: app_edge_14
+Max bandwidth: 163 M"];
+	app_node_5 -- app_node_9	[label="Edge: app_edge_15
+Max bandwidth: 401 M"];
+	app_node_4 -- app_node_6	[label="Edge: app_edge_11
+Max bandwidth: 851 M"];
+	app_node_4 -- app_node_5	[label="Edge: app_edge_6
+Max bandwidth: 898 M"];
+	app_node_2	[label="Node: app_node_2
+N Operations: 1.24*268 G"];
+	app_node_2 -- app_node_3	[label="Edge: app_edge_8
+Max bandwidth: 324 M"];
+	app_node_2 -- app_node_7	[label="Edge: app_edge_4
+Max bandwidth: 459 M"];
+}

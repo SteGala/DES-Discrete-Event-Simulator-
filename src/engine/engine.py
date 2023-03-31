@@ -229,7 +229,7 @@ class engine:
             writer = csv.DictWriter(csvfile, fieldnames=self.__event_queue.field_names())
             writer.writeheader()
             writer.writerows(self.__event_queue.format_csv())
-            
+            pass
     def dump_result_to_file(self):
         print("Generating output result files")
         node_names = self.__infra.get_nodes_name()

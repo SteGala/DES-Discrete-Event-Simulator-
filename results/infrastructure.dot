@@ -1,0 +1,26 @@
+strict digraph "" {
+	graph [label="Template infrasrtructure 
+Number of nodes: 4 
+Number of edges: 6"];
+	node [label="\N",
+		shape=box
+	];
+	network_node_0	[label=network_node_0];
+	compute_node_0	[label="Node: compute_node_0
+Max frequency: 1.500 Ghz"];
+	network_node_0 -> compute_node_0	[label="Edge: app_edge_0
+Max bandwidth: 1.000 Gb/s"];
+	network_node_1	[label=network_node_1];
+	network_node_0 -> network_node_1	[label="Edge: app_edge_4
+Max bandwidth: 10.00 Gb/s"];
+	compute_node_0 -> network_node_0	[label="Edge: app_edge_1
+Max bandwidth: 1.000 Gb/s"];
+	network_node_1 -> network_node_0	[label="Edge: app_edge_5
+Max bandwidth: 10.00 Gb/s"];
+	compute_node_1	[label="Node: compute_node_1
+Max frequency: 1.500 Ghz"];
+	network_node_1 -> compute_node_1	[label="Edge: app_edge_2
+Max bandwidth: 1.000 Gb/s"];
+	compute_node_1 -> network_node_1	[label="Edge: app_edge_3
+Max bandwidth: 1.000 Gb/s"];
+}

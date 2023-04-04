@@ -19,6 +19,7 @@ class event:
         self.__arrival_time = arrival_time
         self.__priority = priority
         self.__event_type = type
+        self.__retry = 0
         
     def to_dict(self):
         return {"id": self.__event_id,
@@ -29,6 +30,12 @@ class event:
     
     def get_arrival_time(self):
         return self.__arrival_time 
+    
+    def increase_retry(self):
+        self.__retry = self.__retry + 1
+        
+    def get_retry_number(self):
+        return self.__retry
     
     def set_arrival_time(self, arrival_time):
         self.__arrival_time = arrival_time

@@ -1,14 +1,15 @@
 from utils.utils import *
+from enum import Enum
+import humanize
 
-class infra_node:
+class infra_compute_node:
     
-    def __init__(self, id, n_core, core_frequency_human, p_static, k, alpha):
+    def __init__(self, id, n_core, core_frequency, p_static, k, alpha):
         self.__id = id
         self.__n_cores = n_core
         self.__n_cores_used = 0
         self.__operating_frequency = [0 for _ in range(n_core)]
-        self.__max_frequency_human = core_frequency_human
-        self.__max_frequency = human_format_to_float(core_frequency_human)
+        self.__max_frequency = core_frequency
         self.__p_static = p_static
         self.__k = k
         self.__alpha = alpha
@@ -17,10 +18,10 @@ class infra_node:
         return self.__id 
     
     def as_dot_label(self):
-        return "Node: " + self.__id + "\nMax frequency: " + self.__max_frequency_human
+        return "Node: " + self.__id + "\nMax frequency: " + humanize.metric(self.__max_frequency, precision=4, unit="hz")
 
     def get_max_freq_human_format(self):
-        return self.__max_frequency_human
+        return  humanize.metric(self.__max_frequency, precision=4, unit="hz")
     
     def compute_power_comsumption(self):
         cons = 0
@@ -65,3 +66,20 @@ class infra_node:
     def get_expected_completion_time(self, operations):
         return operations/self.__max_frequency
         
+        
+class infra_network_node:
+    
+    def __init__(self, id):
+        self.__id = id
+        
+    def get_id(self):
+        return self.__id
+    
+    def as_dot_label(self):
+        return self.__id
+    
+    def compute_resource_usage(self):
+        return 0
+    
+    def compute_power_comsumption(self):
+        return 0

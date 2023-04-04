@@ -1,0 +1,11 @@
+strict graph "" {
+	node [label="\N",
+		shape=box
+	];
+	app_1_task_0	[label="Node: app_1_task_0
+N Operations: 2.39*386 G"];
+	app_1_task_1	[label="Node: app_1_task_1
+N Operations: 2.99*485 G"];
+	app_1_task_0 -- app_1_task_1	[label="Edge: app_edge_0
+Max bandwidth: 1.00 G"];
+}

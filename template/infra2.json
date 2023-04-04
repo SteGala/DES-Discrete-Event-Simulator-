@@ -1,0 +1,41 @@
+{
+    "name": "Template infrasrtructure",
+    "network": "10G",
+    "nodes":
+    [
+        {
+            "replicas": 1,
+            "n_core_min": 5,
+            "n_core_max": 5,
+            "core_frequency_min": "1.5G",
+            "core_frequency_max": "1.5G",
+            "p_static_min": 1,
+            "p_static_max": 1,
+            "k_min": 1,
+            "k_max": 1,
+            "alpha_min": 1,
+            "alpha_max": 1,
+            "network": {
+                "min_resource": "1G",
+                "max_resource": "1G"
+            }
+        },
+        {
+            "replicas": 1,
+            "n_core_min": 5,
+            "n_core_max": 5,
+            "core_frequency_min": "1.5G",
+            "core_frequency_max": "1.5G",
+            "p_static_min": 1,
+            "p_static_max": 1,
+            "k_min": 1,
+            "k_max": 1,
+            "alpha_min": 1,
+            "alpha_max": 1,
+            "network": {
+                "min_resource": "1G",
+                "max_resource": "1G"
+            }
+        }
+    ]
+}

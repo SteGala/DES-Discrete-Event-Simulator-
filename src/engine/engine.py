@@ -10,6 +10,7 @@ import csv
 import datetime
 from datetime import datetime as dt
 import copy
+from collections import OrderedDict
 
 class engine:
     def __init__(self, conf_path):
@@ -26,6 +27,7 @@ class engine:
         self.perform_preliminary_checks(simulation_conf)
         
         self.__simulation_name = simulation_conf["name"]
+        self.__max_event_retry = 50
         
         print("Loading infrastructure from config file {}".format(simulation_conf["infra_config"]))
         self.__infra = infrastructure() 
@@ -50,6 +52,7 @@ class engine:
         self.__power_events = []
         self.__resource_events = []
         self.__log_events = []
+        self.__edge_events = []
         
     def perform_preliminary_checks(self, simulation_conf):
         if "name" not in simulation_conf:
@@ -126,44 +129,58 @@ class engine:
                     self.__event_queue.add_event(new_ev)
                     target_app.get_nodes()[key].schedule_on_node(placement[key])
             else:
-                if self.__retry_after_failure_seconds != 0:
-                    new_ev = copy.copy(cur_event)
-                    if self.__use_priority and (cur_event.get_priority() == priority.HIGH):    
-                        new_ev.set_arrival_time(self.__event_queue.get_next_event_time() + datetime.timedelta(milliseconds=1))
-                    else:           
-                        new_ev.set_arrival_time(cur_event.get_arrival_time() + datetime.timedelta(seconds=self.__retry_after_failure_seconds))
-                    self.__event_queue.add_event(new_ev)
+                if self.__retry_after_failure_seconds != 0 and not self.__event_queue.is_empty():
+                    cur_event.increase_retry()
+                    if cur_event.get_retry_number() < self.__max_event_retry:
+                        new_ev = copy.copy(cur_event)
+                        if self.__use_priority and (cur_event.get_priority() == priority.HIGH):    
+                            new_ev.set_arrival_time(self.__event_queue.get_next_event_time() + datetime.timedelta(milliseconds=1))
+                        else:           
+                            new_ev.set_arrival_time(cur_event.get_arrival_time() + datetime.timedelta(seconds=self.__retry_after_failure_seconds))
+                        self.__event_queue.add_event(new_ev)
                     
         elif cur_event.get_event_type() == EventType.UNSCHEDULE:
             target_app = self.__applications[cur_event.get_app_id()]
-            success = self.__allocator.unallocate(target_app.get_nodes()[cur_event.get_task_id()])
             
+            #should never fail
+            success = self.__allocator.unallocate(cur_event.get_task_id(), target_app)
+            if not success:
+                print("Something went wrong with the unchedule.")
+                print("Exiting...")
+                exit()
+             
         return success
                       
     def __save_current_status(self, event: event, status):
-        p = {}
-        r = {}
-        e = {}
-        p["date"] = event.get_arrival_time().strftime(time_format)
-        r["date"] = event.get_arrival_time().strftime(time_format)
-        e["date"] = event.get_arrival_time().strftime(time_format)
+        power = {}
+        resource = {}
+        events = {}
+        edges = {}
+        
+        power["date"] = event.get_arrival_time().strftime(time_format)
+        resource["date"] = event.get_arrival_time().strftime(time_format)
+        events["date"] = event.get_arrival_time().strftime(time_format)
             
         for key in self.__infra.get_nodes():
-            p[key] = self.__infra.get_nodes()[key].compute_power_comsumption()
-            r[key] = self.__infra.get_nodes()[key].compute_resource_usage()
+            power[key] = self.__infra.get_nodes()[key].compute_power_comsumption()
+            resource[key] = self.__infra.get_nodes()[key].compute_resource_usage()
             
-        self.__power_events.append(p)
-        self.__resource_events.append(r)
+        edges = self.__infra.summarize_edges()
+        edges["date"] = event.get_arrival_time().strftime(time_format)
+            
+        self.__power_events.append(power)
+        self.__resource_events.append(resource)
+        self.__edge_events.append(edges)
         
-        e["type"] = event.get_event_type().name
-        e["success"] = status
+        events["type"] = event.get_event_type().name
+        events["success"] = status
         
         if event.get_event_type() == EventType.SCHEDULE:
-            e["note"] = "App: {}".format(event.get_app_id())
+            events["note"] = "App: {}".format(event.get_app_id())
         else:
-            e["note"] = "Task: {}".format(event.get_task_id())
+            events["note"] = "Task: {}".format(event.get_task_id())
         
-        self.__log_events.append(e)
+        self.__log_events.append(events)
         
     def __generate_events(self, config):
         if ("start_date" not in config) or ("end_date" not in config) or ("event_distribution" not in config) or ("application_urgency_ratio" not in config):
@@ -229,7 +246,7 @@ class engine:
             writer = csv.DictWriter(csvfile, fieldnames=self.__event_queue.field_names())
             writer.writeheader()
             writer.writerows(self.__event_queue.format_csv())
-            pass
+            
     def dump_result_to_file(self):
         print("Generating output result files")
         node_names = self.__infra.get_nodes_name()
@@ -251,6 +268,11 @@ class engine:
             writer = csv.DictWriter(csvfile, fieldnames=log_headers)
             writer.writeheader()
             writer.writerows(self.__log_events)
+            
+        with open(os.path.join(generate_os_path(self.__out_dir), "edge_events.csv"), 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=self.__edge_events[0].keys())
+            writer.writeheader()
+            writer.writerows(self.__edge_events)
         
             
             

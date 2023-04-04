@@ -67,6 +67,12 @@ def generate_infra_edge_id(id):
 def generate_event_id(id):
     return "event_" + str(id)
 
+def generate_infra_node_id(id):
+    return "compute_node_" + str(id)
+
+def generate_infra_network_node_id(id):
+    return "network_node_" + str(id)
+
 def str_time_prop(start, end, time_format, prop):
     """Get a time at a proportion of a range of two formatted times.
 

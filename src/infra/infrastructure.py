@@ -1,8 +1,12 @@
-from infra.node import infra_node
+import heapq
+from infra.node import infra_compute_node, infra_network_node
 from infra.edge import infra_edge
 from utils.utils import *
 from exception.exception import InvalidConversionException
 import pygraphviz as pgv
+import random
+
+random.seed(10)
 
 class infrastructure:
 
@@ -22,55 +26,84 @@ class infrastructure:
             print("Exiting...")
             exit()
             
+        count_nodes = 0
+        count_net_nodes = 0
+        count_edges = 0
+        net_nodes = []
+        
         for n in infra_json["nodes"]:
+            net = infra_network_node(generate_infra_network_node_id(count_net_nodes))
+            count_net_nodes = count_net_nodes + 1
+            self.__nodes[net.get_id()] = net
+            self.__edges[net.get_id()] = []
+            net_nodes.append(net)
+            
             try:
-                tmp = infra_node(n["id"], 
-                                int(n["n_core"]),  
-                                n["core_frequency"],
-                                float(n["p_static"]), 
-                                float(n["k"]), 
-                                float(n["alpha"]))
-                
-                self.__nodes[tmp.get_id()] = tmp
-                self.__edges[tmp.get_id()] = []
+                for _ in range(int(n["replicas"])):
+                    n_core = random.randint(int(n["n_core_min"]), int(n["n_core_max"]))
+                    core_frequency = random.uniform(human_format_to_float(n["core_frequency_min"]), human_format_to_float(n["core_frequency_max"]))
+                    p_static = random.uniform(float(n["p_static_min"]), float(n["p_static_max"]))
+                    k = random.uniform(float(n["k_min"]), float(n["k_max"]))
+                    alpha = random.uniform(float(n["alpha_min"]), float(n["alpha_max"]))
+                    
+                    tmp = infra_compute_node(generate_infra_node_id(count_nodes), 
+                                    n_core,  
+                                    core_frequency,
+                                    p_static, 
+                                    k, 
+                                    alpha)
+                    
+                    self.__nodes[tmp.get_id()] = tmp
+                    self.__edges[tmp.get_id()] = []
+                    
+                    resource = random.uniform(human_format_to_float(n["network"]["min_resource"]), human_format_to_float(n["network"]["max_resource"]))
+                    
+                    tmp1 = infra_edge(generate_infra_edge_id(count_edges),
+                                 net.get_id(),
+                                 tmp.get_id(),
+                                 resource)
+                    tmp2 = infra_edge(generate_infra_edge_id(count_edges+1),
+                                    tmp.get_id(),
+                                    net.get_id(),
+                                    resource)
+                    
+                    self.__edges[net.get_id()].append(tmp1)
+                    self.__edges[tmp.get_id()].append(tmp2)
+                    
+                    count_nodes = count_nodes + 1
+                    count_edges = count_edges + 2
             except InvalidConversionException:
                 print("Error converting node {} core_frequency.".format(n["id"]))
                 print("Exiting...")
                 exit()
             except Exception as e:
+                print(e)
                 print("Infrastructure nodes are not properly formatted.")
                 print("Exiting...")
                 exit()
-                
-        if "edges" not in infra_json:
-            print("Missing infrastructure edges.")
-            print("Exiting...")
-            exit()
-                
-        count = 0
-        for e in infra_json["edges"]:
-            try:
-                tmp1 = infra_edge(generate_infra_edge_id(count),
-                                 e["from"],
-                                 e["to"],
-                                 e["resource"])
-                tmp2 = infra_edge(generate_infra_edge_id(count+1),
-                                 e["to"],
-                                 e["from"],
-                                 e["resource"])
-                
-                self.__edges[e["from"]].append(tmp1)
-                self.__edges[e["to"]].append(tmp2)
-                count = count + 2
-            except InvalidConversionException:
-                print("Error converting edge {} core_frequency.".format(count))
+        
+        try:
+            res = human_format_to_float(infra_json["network"])
+            for i in range(len(net_nodes)-1):
+                for j in range(i+1, len(net_nodes)):
+                    e1 = infra_edge(generate_infra_edge_id(count_edges),
+                                    net_nodes[i].get_id(),
+                                    net_nodes[j].get_id(),
+                                    res)
+                    e2 = infra_edge(generate_infra_edge_id(count_edges + 1),
+                                    net_nodes[j].get_id(),
+                                    net_nodes[i].get_id(),
+                                    res)
+                    
+                    self.__edges[net_nodes[i].get_id()].append(e1)
+                    self.__edges[net_nodes[j].get_id()].append(e2)
+                    
+                    count_edges = count_edges + 1
+        except Exception as e:
+                print(e)
+                print("Infrastructure network is not properly formatted.")
                 print("Exiting...")
                 exit()
-            except:
-                print("Infrastructure edges are not properly formatted.")
-                print("Exiting...")
-                exit()
-                
     def print(self):
         print()
         print("--INFRASTRUCTURE NODES--")
@@ -90,7 +123,7 @@ class infrastructure:
         ret = []
         
         for key in self.__nodes:
-            if self.__nodes[key].can_host(n_core):
+            if isinstance(self.__nodes[key], infra_compute_node) and self.__nodes[key].can_host(n_core):
                 ret.append(self.__nodes[key])
                 
         return ret
@@ -102,8 +135,9 @@ class infrastructure:
         return list(self.__nodes.keys())
         
     def save_as_dot(self, path):
-        G = pgv.AGraph(directed=False)
+        G = pgv.AGraph(directed=True)
         G.node_attr["shape"] = "box"
+        G.graph_attr["label"] = self.__summarize_infrastructure()
         
         for key in self.__edges:
             for e in self.__edges[key]:
@@ -114,6 +148,84 @@ class infrastructure:
                 n.attr["label"] = self.__nodes[e.get_to()].as_dot_label()      
                 
         G.write(os.path.join(path, "infrastructure.dot"))
+        
+    def get_node_edges(self, node_id):
+        return self.__edges[node_id]
+    
+    def consume_edge_resources(self, from_id, to_id, amount):
+        edges = self.__find_path_between_nodes(from_id, to_id)
+        
+        for e in edges:
+            if not e.can_host(amount):
+                return False
+            
+        for e in edges:
+            e.consume_resources(amount)
+            
+        return True
+        
+    
+    def release_edge_resources(self, from_id, to_id, amount):
+        edges = self.__find_path_between_nodes(from_id, to_id)
+            
+        for e in edges:
+            e.release_resources(amount)
+            
+    def summarize_edges(self):
+        result = {}
+        
+        for key in self.__edges:
+            for e in self.__edges[key]:
+                result[e.get_id()] = e.get_percentage_available_resources()
+                
+        return result
+        
+    def __summarize_infrastructure(self):
+        count = 0
+        for key in self.__edges:
+            for i in self.__edges[key]:
+                count = count + 1
+        return "{} \nNumber of nodes: {} \nNumber of edges: {}".format(self.__name, len(self.__nodes), count)
+    
+    def __find_path_between_nodes(self, n1, n2):
+        #print("From {} to {}".format(n1, n2))
+        edges = []
+        id1 = ""
+        id2 = ""
+        
+        # n1 --> network node
+        for e in self.__edges[n1]:
+            if isinstance(self.__nodes[e.get_to()], infra_network_node):
+                edges.append(e)
+                id1 = e.get_to()
+                for e1 in self.__edges[id1]:
+                    if e1.get_to() == n1:
+                        edges.append(e1)
+                        break
+                break
+            
+        # n2 --> network node
+        for e in self.__edges[n2]:
+            if isinstance(self.__nodes[e.get_to()], infra_network_node):
+                edges.append(e)
+                id2 = e.get_to()
+                for e1 in self.__edges[id2]:
+                    if e1.get_to() == n2:
+                        edges.append(e1)
+                        break
+                break
+          
+        # network node --> network node  
+        for e in self.__edges[id1]:
+            if e.get_to() == id2:
+                edges.append(e)
+                for e1 in self.__edges[id2]:
+                    if e1.get_to() == id1:
+                        edges.append(e1)
+                        break
+                break
+            
+        return edges
         
         
         

@@ -18,6 +18,9 @@ class application:
     
     def get_nodes(self):
         return self.__nodes
+    
+    def get_node(self, id):
+        return self.__nodes[id]
         
     def __create_randomized_application(self, config):
         self.__nodes = {}
@@ -118,6 +121,9 @@ class application:
                 print("\t(X) -> ({})".format(e.get_to()), end="")
             print()
         print()
+        
+    def get_node_edges(self, node_id):
+        return self.__edges[node_id]
         
     def save_as_dot(self, path):
         G = pgv.AGraph(directed=False)

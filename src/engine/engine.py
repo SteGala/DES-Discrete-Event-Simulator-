@@ -126,9 +126,14 @@ class engine:
             if success:
                 print("{} - Succesfully allocate application {}".format(cur_event.get_arrival_time(), cur_event.get_app_id()))
                 
+                max_execution_time = ""
                 for key in placement:
                     execution_time = self.__infra.get_nodes()[placement[key]].get_expected_completion_time(target_app.get_task_by_id(key).get_n_operations())
-                    ev_date = cur_event.get_arrival_time() + datetime.timedelta(seconds=execution_time)
+                    if max_execution_time == "" or execution_time > max_execution_time:
+                        max_execution_time = execution_time
+                
+                for key in placement:
+                    ev_date = cur_event.get_arrival_time() + datetime.timedelta(seconds=max_execution_time)
                     new_ev = event(target_app, key, ev_date, self.is_event_urgent(), EventType.UNSCHEDULE)
                     self.__event_queue[sched_alg].add_event(new_ev)
                     target_app.get_nodes()[key].schedule_on_node(placement[key])

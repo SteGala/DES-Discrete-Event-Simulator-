@@ -11,11 +11,20 @@
         "event_distribution": "random",
         "application_urgency_ratio": 1,
         "scheduling_algorithm": 
-        {
-            "name": "FIFO",
-            "retry_after_failure_seconds": 10,
-            "use_priority": true
-        },
+        [
+            {
+                "name": "FIFO",
+                "label": "FIFO1",
+                "retry_after_failure_seconds": 10,
+                "use_priority": true
+            },
+            {
+                "name": "FIFO",
+                "label": "FIFO2",
+                "retry_after_failure_seconds": 60,
+                "use_priority": false
+            }
+        ],
         "alloation_algorithm": 
         {
             "name": "first_fit"

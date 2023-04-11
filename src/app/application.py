@@ -3,8 +3,14 @@ from app.node import app_node
 from app.edge import app_edge
 from utils.utils import *
 import pygraphviz as pgv
+from enum import Enum
 
 random.seed(10)
+
+class application_class(Enum):
+    DB = 1
+    HPC = 2
+    WEB = 3
 
 class application:
     
@@ -25,6 +31,7 @@ class application:
     def __create_randomized_application(self, config):
         self.__nodes = {}
         self.__edges = {}
+        self.__class = random.choice(list(application_class))
         
         min_n_node = int(config["min_n_node"])
         max_n_node = int(config["max_n_node"])
@@ -66,6 +73,12 @@ class application:
                 
                 self.__n_edges = self.__n_edges + 1
        
+    def get_application_class(self):
+        return self.__class
+    
+    def reset(self):
+        for n in self.__nodes:
+            self.__nodes[n].reset()
             
     def __has_edge(self, node1, node2):
         for e in self.__edges[generate_app_node_id(self.__id, node1)]:

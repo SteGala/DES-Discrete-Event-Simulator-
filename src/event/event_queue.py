@@ -1,5 +1,6 @@
 from utils.utils import *
 from enum import Enum
+from app.application import application_class
 
 class EventType(Enum):
     SCHEDULE = 1
@@ -13,8 +14,8 @@ class event_behavior(Enum):
     FIFO = 0
 
 class event:
-    def __init__(self, app_id, task_ids, arrival_time, priority, type):
-        self.__app_id = app_id
+    def __init__(self, app, task_ids, arrival_time, priority, type):
+        self.__app = app
         self.__task_ids = task_ids
         self.__arrival_time = arrival_time
         self.__priority = priority
@@ -23,7 +24,7 @@ class event:
         
     def to_dict(self):
         return {"id": self.__event_id,
-                "app_id": self.__app_id,
+                "app_id": self.__app.get_id(),
                 "task_id": self.__task_ids,
                 "arrival_time": self.__arrival_time.strftime(time_format),
                 "priority": self.__priority}       
@@ -44,7 +45,10 @@ class event:
         self.__event_id = event_id
         
     def get_app_id(self):
-        return self.__app_id
+        return self.__app.get_id()
+    
+    def get_application(self):
+        return self.__app
     
     def get_event_type(self):
         return self.__event_type
@@ -58,16 +62,38 @@ class event:
 
 class event_queue:
     def __init__(self, behaviour):
-        self.events = []
+        self.events = {}
         self.__event_id = 0
         
+        for a_class in application_class:
+            self.events[a_class.value] = []
+        
         accepted_behaviour = [e.name for e in event_behavior]
-        if behaviour not in accepted_behaviour:
-            print("Unrecognised scheduling behaviour {}. Accepted values are: {}".format(behaviour, accepted_behaviour))
+        if behaviour["name"] not in accepted_behaviour:
+            print("Unrecognised scheduling behaviour {}. Accepted values are: {}".format(behaviour["name"], accepted_behaviour))
             print("Exiting...")
             exit()
             
-        self.__behaviour = event_behavior[behaviour]
+        self.__behaviour = event_behavior[behaviour["name"]]
+        self.__label = behaviour["label"]
+        
+        if self.__behaviour == event_behavior.FIFO:
+            if ("retry_after_failure_seconds" not in behaviour) or ("use_priority" not in behaviour):
+                print("Simulation config is not properly defined, missing 'retry_after_failure_seconds' or 'use_priority' configuration.")
+                print("Exiting...")
+                exit()
+                
+            self.__retry_after_failure_seconds = int(behaviour["retry_after_failure_seconds"])
+            self.__use_priority = behaviour["use_priority"]
+            
+    def get_label(self):
+        return self.__label
+    
+    def get_retry_time(self):
+        return self.__retry_after_failure_seconds
+    
+    def use_priority(self):
+        return self.__use_priority
         
     def add_event(self, event):
         if self.__behaviour == event_behavior.FIFO:
@@ -81,30 +107,52 @@ class event_queue:
         event.set_event_id(generate_event_id(self.__event_id))
         self.__event_id = self.__event_id + 1
         
-        if not self.events:
-            self.events.append(event)
+        app_class = event.get_application().get_application_class().value
+        
+        if not self.events[app_class]:
+            self.events[app_class].append(event)
         else:
-            for i, e in enumerate(self.events):
+            for i, e in enumerate(self.events[app_class]):
                 if event.get_arrival_time() < e.get_arrival_time():
-                    self.events.insert(i, event)
+                    self.events[app_class].insert(i, event)
                     break
             else:
-                self.events.append(event)
+                self.events[app_class].append(event)
                 
     def __remove_fifo(self):
-        if self.events:
-            return self.events.pop(0)
-        else:
-            return None
+        target_list = ""
+        most_recent_event_date = ""
+        
+        for key in self.events:
+            if self.events[key]:
+                if most_recent_event_date == "" or self.events[key][0].get_arrival_time() < most_recent_event_date:
+                    target_list = key
+                    most_recent_event_date = self.events[key][0].get_arrival_time()
+            
+        if target_list != "":
+            return self.events[target_list].pop(0)
+        
+        return None
         
     def get_next_event_time(self):
-        if self.events:
-            return self.events[0].get_arrival_time()
-        else:
-            return None
+        target_list = ""
+        most_recent_event_date = ""
+        
+        for key in self.events:
+            if self.events[key]:
+                if most_recent_event_date == "" or self.events[key][0].get_arrival_time() < most_recent_event_date:
+                    target_list = key
+                    most_recent_event_date = self.events[key][0].get_arrival_time()
+            
+        if target_list != "":
+            return most_recent_event_date
+        return None
         
     def is_empty(self):
-        return len(self.events) == 0
+        for key in self.events:
+            if len(self.events[key]) != 0:
+                return False
+        return True
     
     def format_csv(self):
         ret = []

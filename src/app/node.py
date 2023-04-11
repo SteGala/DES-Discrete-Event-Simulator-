@@ -13,6 +13,10 @@ class app_node:
     def get_id(self):
         return self.__id
     
+    def reset(self):
+        self.__scheduled_on = ""
+        self.__unallocated = False
+    
     def get_n_core(self):
         return self.__cores
     

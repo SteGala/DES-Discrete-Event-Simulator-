@@ -1,8 +1,0 @@
-date,type,success,note
-27/12/2022 10:00:28,SCHEDULE,True,App: app_0
-27/12/2022 10:01:49,SCHEDULE,False,App: app_1
-27/12/2022 10:02:39,UNSCHEDULE,True,Task: app_0_task_1
-27/12/2022 10:02:39,SCHEDULE,True,App: app_1
-27/12/2022 10:05:15,UNSCHEDULE,True,Task: app_0_task_0
-27/12/2022 10:06:56,UNSCHEDULE,True,Task: app_1_task_0
-27/12/2022 10:08:02,UNSCHEDULE,True,Task: app_1_task_1

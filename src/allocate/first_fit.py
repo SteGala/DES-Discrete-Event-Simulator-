@@ -34,6 +34,8 @@ class first_fit_allocator:
             
         # release edge resources
         edges = application.get_node_edges(task.get_id())
+       
+        # bisogna resettare questi flag
         for e in edges:
             if task.scheduled_on_infra_node() != application.get_node(e.get_to()).scheduled_on_infra_node() and not application.get_node(e.get_to()).is_unallocated():
                 self.__infrastructure.release_edge_resources(task.scheduled_on_infra_node(), application.get_node(e.get_to()).scheduled_on_infra_node(), e.get_amount())

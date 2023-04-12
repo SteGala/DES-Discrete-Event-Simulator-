@@ -14,23 +14,27 @@ class event_behavior(Enum):
     FIFO = 0
 
 class event:
-    def __init__(self, app, task_ids, arrival_time, priority, type):
+    def __init__(self, app, task_ids, arrival_time, event_time, priority, type):
         self.__app = app
         self.__task_ids = task_ids
-        self.__arrival_time = arrival_time
+        self.__event_time = event_time
         self.__priority = priority
         self.__event_type = type
         self.__retry = 0
+        self.__arrival_time = arrival_time
         
     def to_dict(self):
         return {"id": self.__event_id,
                 "app_id": self.__app.get_id(),
                 "task_id": self.__task_ids,
-                "arrival_time": self.__arrival_time.strftime(time_format),
+                "arrival_time": self.__event_time.strftime(time_format),
                 "priority": self.__priority}       
     
-    def get_arrival_time(self):
-        return self.__arrival_time 
+    def get_event_time(self):
+        return self.__event_time 
+    
+    def get_elapsed_time_in_seconds(self):
+        return (self.__event_time - self.__arrival_time).total_seconds()
     
     def increase_retry(self):
         self.__retry = self.__retry + 1
@@ -38,8 +42,11 @@ class event:
     def get_retry_number(self):
         return self.__retry
     
-    def set_arrival_time(self, arrival_time):
-        self.__arrival_time = arrival_time
+    def set_event_time(self, event_time):
+        self.__event_time = event_time
+        
+    def get_arrival_time(self):
+        return self.__arrival_time
     
     def set_event_id(self, event_id):
         self.__event_id = event_id
@@ -103,7 +110,7 @@ class event_queue:
         if self.__behaviour == event_behavior.FIFO:
             return self.__remove_fifo()
                  
-    def __add_fifo(self, event):
+    def __add_fifo(self, event: event):
         event.set_event_id(generate_event_id(self.__event_id))
         self.__event_id = self.__event_id + 1
         
@@ -113,7 +120,7 @@ class event_queue:
             self.events[app_class].append(event)
         else:
             for i, e in enumerate(self.events[app_class]):
-                if event.get_arrival_time() < e.get_arrival_time():
+                if event.get_event_time() < e.get_event_time():
                     self.events[app_class].insert(i, event)
                     break
             else:
@@ -125,9 +132,9 @@ class event_queue:
         
         for key in self.events:
             if self.events[key]:
-                if most_recent_event_date == "" or self.events[key][0].get_arrival_time() < most_recent_event_date:
+                if most_recent_event_date == "" or self.events[key][0].get_event_time() < most_recent_event_date:
                     target_list = key
-                    most_recent_event_date = self.events[key][0].get_arrival_time()
+                    most_recent_event_date = self.events[key][0].get_event_time()
             
         if target_list != "":
             return self.events[target_list].pop(0)
@@ -140,9 +147,9 @@ class event_queue:
         
         for key in self.events:
             if self.events[key]:
-                if most_recent_event_date == "" or self.events[key][0].get_arrival_time() < most_recent_event_date:
+                if most_recent_event_date == "" or self.events[key][0].get_event_time() < most_recent_event_date:
                     target_list = key
-                    most_recent_event_date = self.events[key][0].get_arrival_time()
+                    most_recent_event_date = self.events[key][0].get_event_time()
             
         if target_list != "":
             return most_recent_event_date

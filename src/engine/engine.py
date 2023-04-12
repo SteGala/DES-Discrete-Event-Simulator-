@@ -52,6 +52,7 @@ class engine:
         self.__resource_events = []
         self.__log_events = []
         self.__edge_events = []
+        self.__time_events = []
         
     def perform_preliminary_checks(self, simulation_conf):
         if "name" not in simulation_conf:
@@ -124,7 +125,7 @@ class engine:
             target_app = self.__applications[cur_event.get_app_id()]
             success, placement = self.__allocator.allocate(target_app)
             if success:
-                print("{} - Succesfully allocate application {}".format(cur_event.get_arrival_time(), cur_event.get_app_id()))
+                print("{} - Succesfully allocate application {}".format(cur_event.get_event_time(), cur_event.get_app_id()))
                 
                 max_execution_time = ""
                 for key in placement:
@@ -133,35 +134,55 @@ class engine:
                         max_execution_time = execution_time
                 
                 for key in placement:
-                    ev_date = cur_event.get_arrival_time() + datetime.timedelta(seconds=max_execution_time)
-                    new_ev = event(target_app, key, ev_date, self.is_event_urgent(), EventType.UNSCHEDULE)
+                    ev_date = cur_event.get_event_time() + datetime.timedelta(seconds=max_execution_time)
+                    new_ev = event(target_app, key, cur_event.get_arrival_time(), ev_date, self.is_event_urgent(), EventType.UNSCHEDULE)
                     self.__event_queue[sched_alg].add_event(new_ev)
                     target_app.get_nodes()[key].schedule_on_node(placement[key])
             else:
-                print("{} - Failed to allocate application {}".format(cur_event.get_arrival_time(), cur_event.get_app_id()))
+                print("{} - Failed to allocate application {}".format(cur_event.get_event_time(), cur_event.get_app_id()))
                 
                 if self.__event_queue[sched_alg].get_retry_time() != 0 and not self.__event_queue[sched_alg].is_empty():
                     cur_event.increase_retry()
                     if cur_event.get_retry_number() < self.__max_event_retry:
                         new_ev = copy.copy(cur_event)
                         if self.__event_queue[sched_alg].use_priority() and (cur_event.get_priority() == priority.HIGH):    
-                            new_ev.set_arrival_time(self.__event_queue[sched_alg].get_next_event_time() + datetime.timedelta(milliseconds=1))
+                            new_ev.set_event_time(self.__event_queue[sched_alg].get_next_event_time() + datetime.timedelta(milliseconds=1))
                         else:           
-                            new_ev.set_arrival_time(cur_event.get_arrival_time() + datetime.timedelta(seconds=self.__event_queue[sched_alg].get_retry_time()))
+                            new_ev.set_event_time(cur_event.get_event_time() + datetime.timedelta(seconds=self.__event_queue[sched_alg].get_retry_time()))
                         self.__event_queue[sched_alg].add_event(new_ev)
                     
         elif cur_event.get_event_type() == EventType.UNSCHEDULE:
             target_app = self.__applications[cur_event.get_app_id()]
             
-            #should never fail
             success = self.__allocator.unallocate(cur_event.get_task_id(), target_app)
+            #should never fail
             if not success:
                 print("Something went wrong with the unchedule.")
                 print("Exiting...")
                 exit()
-            print("{} - Succesfully un-allocate task {} of application {}".format(cur_event.get_arrival_time(), cur_event.get_task_id() ,cur_event.get_app_id()))
+            print("{} - Succesfully un-allocate task {} of application {}".format(cur_event.get_event_time(), cur_event.get_task_id() ,cur_event.get_app_id()))
+            self.__save_execution_time(cur_event)
+
         return success
     
+    def __save_execution_time(self, curr_event: event):
+        ev = {}
+        ev["date"] = curr_event.get_event_time().strftime(time_format)
+        ev["application"] = curr_event.get_app_id()
+        ev["execution_time"] = curr_event.get_elapsed_time_in_seconds()
+        
+        if not self.__time_events:
+            self.__time_events.append(ev)
+            return
+        
+        found = False
+        for t_ev in self.__time_events:
+            if t_ev["application"] == curr_event.get_app_id():
+                found = True
+        
+        if not found:            
+            self.__time_events.append(ev)
+            
     def __reset_engine(self):
         for app_key in self.__applications:
             self.__applications[app_key].reset()
@@ -172,16 +193,16 @@ class engine:
         events = {}
         edges = {}
         
-        power["date"] = event.get_arrival_time().strftime(time_format)
-        resource["date"] = event.get_arrival_time().strftime(time_format)
-        events["date"] = event.get_arrival_time().strftime(time_format)
+        power["date"] = event.get_event_time().strftime(time_format)
+        resource["date"] = event.get_event_time().strftime(time_format)
+        events["date"] = event.get_event_time().strftime(time_format)
             
         for key in self.__infra.get_nodes():
             power[key] = self.__infra.get_nodes()[key].compute_power_comsumption()
             resource[key] = self.__infra.get_nodes()[key].compute_resource_usage()
             
         edges = self.__infra.summarize_edges()
-        edges["date"] = event.get_arrival_time().strftime(time_format)
+        edges["date"] = event.get_event_time().strftime(time_format)
             
         self.__power_events.append(power)
         self.__resource_events.append(resource)
@@ -228,7 +249,7 @@ class engine:
             rand_date = random_date(self.__start_date, self.__end_date, random.random())
             is_urgent = self.is_event_urgent()
             
-            e = event(self.__applications[app], list(self.__applications[app].get_nodes().keys()), rand_date, is_urgent, EventType.SCHEDULE)
+            e = event(self.__applications[app], list(self.__applications[app].get_nodes().keys()), rand_date, rand_date, is_urgent, EventType.SCHEDULE)
             for q in self.__event_queue:
                 q.add_event(e)
             count = count + 1
@@ -268,12 +289,12 @@ class engine:
         print("Generating report directory for {}".format(subdir))
         os.mkdir(os.path.join(generate_os_path(self.__out_dir), subdir))
         
-        with open(os.path.join(generate_os_path(self.__out_dir), subdir, "power_events.csv"), 'w') as csvfile:
+        with open(os.path.join(generate_os_path(self.__out_dir), subdir, "power_usage.csv"), 'w') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=node_headers)
             writer.writeheader()
             writer.writerows(self.__power_events)
             
-        with open(os.path.join(generate_os_path(self.__out_dir), subdir, "resource_events.csv"), 'w') as csvfile:
+        with open(os.path.join(generate_os_path(self.__out_dir), subdir, "resource_usage.csv"), 'w') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=node_headers)
             writer.writeheader()
             writer.writerows(self.__resource_events)
@@ -283,16 +304,22 @@ class engine:
             writer.writeheader()
             writer.writerows(self.__log_events)
             
-        with open(os.path.join(generate_os_path(self.__out_dir), subdir, "edge_events.csv"), 'w') as csvfile:
+        with open(os.path.join(generate_os_path(self.__out_dir), subdir, "edge_usage.csv"), 'w') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=self.__edge_events[0].keys())
             writer.writeheader()
             writer.writerows(self.__edge_events)
+            
+        with open(os.path.join(generate_os_path(self.__out_dir), subdir, "time_events.csv"), 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=self.__time_events[0].keys())
+            writer.writeheader()
+            writer.writerows(self.__time_events)
             
     def __clean_results(self):
         self.__power_events = []
         self.__resource_events = []
         self.__log_events = []
         self.__edge_events = []
+        self.__time_events = []
         
             
             

@@ -1,15 +1,15 @@
 {
-    "number_of_applications": 2,
+    "number_of_applications": 30,
     "app_spec":
     {
         "min_n_node": 2,
-        "max_n_node": 2,
-        "min_task_n_core_requirements": "2300m",
+        "max_n_node": 15,
+        "min_task_n_core_requirements": "200m",
         "max_task_n_core_requirements": "3000m",
-        "min_task_operation_requirements": "10G",
+        "min_task_operation_requirements": "1G",
         "max_task_operation_requirements": "500.2G",
-        "min_task_edge_requirements": "1G",
-        "max_task_edge_requirements": "1G",
-        "task_connectivity_ratio": 1
+        "min_task_edge_requirements": "1K",
+        "max_task_edge_requirements": "10M",
+        "task_connectivity_ratio": 0.4
     }
 }

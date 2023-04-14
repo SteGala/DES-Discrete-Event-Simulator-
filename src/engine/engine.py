@@ -33,7 +33,7 @@ class engine:
         i_conf = open(generate_os_path(simulation_conf["infra_config"]))
         infrastructure_conf = json.load(i_conf)
         self.__infra.load_infrastructure(infrastructure_conf)
-        self.__infra.save_as_dot(generate_os_path(self.__out_dir))
+        #self.__infra.save_as_dot(generate_os_path(self.__out_dir))
         i_conf.close()
             
         print("Generate placement events for the simulation")
@@ -146,7 +146,7 @@ class engine:
                     if cur_event.get_retry_number() < self.__max_event_retry:
                         new_ev = copy.copy(cur_event)
                         if self.__event_queue[sched_alg].use_priority() and (cur_event.get_priority() == priority.HIGH):    
-                            new_ev.set_event_time(self.__event_queue[sched_alg].get_next_event_time() + datetime.timedelta(milliseconds=1))
+                            new_ev.set_event_time(self.__event_queue[sched_alg].get_next_unschedule_event_time() + datetime.timedelta(milliseconds=1))
                         else:           
                             new_ev.set_event_time(cur_event.get_event_time() + datetime.timedelta(seconds=self.__event_queue[sched_alg].get_retry_time()))
                         self.__event_queue[sched_alg].add_event(new_ev)
@@ -212,7 +212,7 @@ class engine:
         events["success"] = status
         
         if event.get_event_type() == EventType.SCHEDULE:
-            events["note"] = "App: {}".format(event.get_app_id())
+            events["note"] = "App: {} ({})".format(event.get_app_id(), event.get_application().get_application_class_str())
         else:
             events["note"] = "Task: {}".format(event.get_task_id())
         
@@ -265,19 +265,13 @@ class engine:
         for i in range(int(app_conf["number_of_applications"])):
             a = application(generate_app_name(i), app_conf["app_spec"])
             self.__applications[generate_app_name(i)] = a
-            a.save_as_dot(generate_os_path(self.__out_dir))
+            #a.save_as_dot(generate_os_path(self.__out_dir))
             
     def is_event_urgent(self):
         r = random.random()
         if r <= self.__application_urgency:
             return priority.HIGH
         return priority.LOW   
-        
-    def dump_events_to_file(self):          
-        with open(os.path.join(generate_os_path(self.__out_dir), "events.csv"), 'w') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=self.__event_queue.field_names())
-            writer.writeheader()
-            writer.writerows(self.__event_queue.format_csv())
             
     def __dump_result_to_file(self, subdir):
         print("Generating output result files")

@@ -154,6 +154,20 @@ class event_queue:
         if target_list != "":
             return most_recent_event_date
         return None
+    
+    def get_next_unschedule_event_time(self):  
+        target_list = ""
+        most_recent_event_date = ""
+              
+        for key_ev in self.events:
+            for ev in self.events[key_ev]:
+                if ev.get_event_type() == EventType.UNSCHEDULE and (most_recent_event_date == "" or ev.get_event_time() < most_recent_event_date):
+                    target_list = key_ev
+                    most_recent_event_date = ev.get_event_time()
+        
+        if target_list != "":
+            return most_recent_event_date
+        return None
         
     def is_empty(self):
         for key in self.events:

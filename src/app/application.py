@@ -76,6 +76,9 @@ class application:
     def get_application_class(self):
         return self.__class
     
+    def get_application_class_str(self):
+        return self.__class.name
+    
     def reset(self):
         for n in self.__nodes:
             self.__nodes[n].reset()

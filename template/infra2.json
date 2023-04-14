@@ -4,9 +4,9 @@
     "nodes":
     [
         {
-            "replicas": 1,
+            "replicas": 14,
             "n_core_min": 5,
-            "n_core_max": 5,
+            "n_core_max": 15,
             "core_frequency_min": "1.5G",
             "core_frequency_max": "1.5G",
             "p_static_min": 1,
@@ -21,9 +21,9 @@
             }
         },
         {
-            "replicas": 1,
-            "n_core_min": 5,
-            "n_core_max": 5,
+            "replicas": 8,
+            "n_core_min": 4,
+            "n_core_max": 22,
             "core_frequency_min": "1.5G",
             "core_frequency_max": "1.5G",
             "p_static_min": 1,
